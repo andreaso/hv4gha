@@ -1,0 +1,72 @@
+---
+
+name: Linting
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  python:
+    name: Python
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        py_version: ["3.10", "3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Enable Python ${{ matrix.py_version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.py_version }}
+
+      - name: Use Python ${{ matrix.py_version }} with Poetry
+        run: poetry env use python${{ matrix.py_version }}
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Check import order
+        run: poetry run isort --check hv4gha/ integration/
+
+      - name: Check Black formating
+        run: poetry run black --check hv4gha/ integration/
+
+      - name: Verify type hints
+        run: poetry run mypy --strict hv4gha/ integration/
+
+      - name: Run Pylint
+        run: poetry run pylint -rn -sn hv4gha/ integration/
+
+  super:
+    name: Super-Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Lint
+        uses: super-linter/super-linter/slim@v5
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_JSCPD: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

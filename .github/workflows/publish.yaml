@@ -1,0 +1,42 @@
+---
+
+name: Publish
+
+on:
+  push:
+    tags:
+      - v*
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  pypi:
+    name: PyPi Publish
+    runs-on: ubuntu-22.04
+
+    environment:
+      name: release
+      url: https://pypi.org/project/hv4gha/
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Output expected packge version refs/tags/
+        id: expected
+        run: echo "tagref=refs/tags/v$(poetry version --short)" >> "$GITHUB_OUTPUT"
+
+      - name: Fail on mismatch between tag and package version
+        if: github.ref != steps.expected.outputs.tagref
+        run: echo "Mismatch between pushed tag and package version"; exit 1
+
+      - name: Build package
+        run: poetry build
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1

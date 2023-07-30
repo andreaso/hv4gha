@@ -1,0 +1,55 @@
+---
+
+name: Testing
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: Integration testing
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Docker Compose .env file
+        run: .github/helpers/gen-compose-env > integration/.env
+        env:
+          TEST_APP_KEY_B64: ${{ secrets.TEST_APP_KEY_B64 }}
+
+      - name: Build test images
+        run: docker compose -f integration/docker-compose.yaml build
+
+      - name: Bring up Vault server
+        run: docker compose -f integration/docker-compose.yaml up --wait --detach vault-server
+
+      - name: Enable Vault's Transit Engine
+        run: docker compose -f integration/docker-compose.yaml run --no-deps vault-setup
+
+      - name: Import App key (Python 3.10)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310 import
+
+      - name: Issue Access Token (Python 3.10)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310 issue
+
+      - name: Issue scoped Access Token (Python 3.10)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310 issue-scoped
+
+      - name: Import App key (Python 3.11)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311 import
+
+      - name: Issue Access Token (Python 3.11)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311 issue
+
+      - name: Issue scoped Access Token (Python 3.11)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311 issue-scoped

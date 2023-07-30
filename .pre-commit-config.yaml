@@ -1,0 +1,43 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-toml
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        entry: poetry run isort
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+        args: ["--filter-files"]
+
+      - id: black
+        name: black
+        entry: poetry run black
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy
+        language: system
+        types_or: [python, pyi]
+        exclude: '^tests/'
+        require_serial: true
+        args: ["--strict"]
+
+      - id: pylint
+        name: pylint
+        entry: poetry run pylint
+        language: system
+        types: [python]
+        args: ["-rn", "-sn"]
