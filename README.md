@@ -1,4 +1,4 @@
-# Hashicorp Vault for GitHub Apps
+# HashiCorp Vault for GitHub Apps
 
 Python library for using [HashiCorp Vault][1]'s [Transit Engine][2] to
 manage a GitHub App's private RSA key. More precisely, the library
@@ -18,7 +18,7 @@ pip install hv4gha
 ## Usage
 
 In addition to the examples below see also the
-[hv4gha/entry.py](hv4gha/entry.py) docstrings.
+[hv4gha/entry.py](https://github.com/andreaso/hv4gha/blob/main/hv4gha/entry.py) docstrings.
 
 ### Import App key
 
