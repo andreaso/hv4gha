@@ -12,7 +12,23 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 
 class VaultAPIError(Exception):
-    """Error response from the Vault API"""
+    """Any error response from the Vault API"""
+
+
+class AppKeyImportError(VaultAPIError):
+    """Failure to upload/import the wrapped GitHub App key into Vault"""
+
+
+class JWTSigningError(VaultAPIError):
+    """Failure to have Vault sign a GitHub App JWT token"""
+
+
+class TokenRevokeError(VaultAPIError):
+    """Failure to self-revoke the Vault token"""
+
+
+class WrappingKeyDownloadError(VaultAPIError):
+    """Failure to download the Vault Transit wrapping key"""
 
 
 class VaultTransit:
@@ -63,7 +79,7 @@ class VaultTransit:
                 error_message = "\n".join(http_error.response.json()["errors"])
             except Exception:  # pylint: disable=broad-exception-caught
                 error_message = "<Failed to parse Vault API error response>"
-            raise VaultAPIError(error_message) from http_error
+            raise WrappingKeyDownloadError(error_message) from http_error
 
         wrapping_pem_key = response.json()["data"]["public_key"].encode()
         wrapping_key = serialization.load_pem_public_key(wrapping_pem_key)
@@ -90,7 +106,10 @@ class VaultTransit:
         return wrapped_b64
 
     def __api_write(
-        self, api_path: str, payload: None | dict[str, Any] = None
+        self,
+        api_path: str,
+        payload: None | dict[str, Any] = None,
+        vault_exception: type[Exception] = VaultAPIError,
     ) -> requests.models.Response:
         update_url = self.vault_addr + api_path
 
@@ -111,7 +130,7 @@ class VaultTransit:
                 error_message = "\n".join(http_error.response.json()["errors"])
             except Exception:  # pylint: disable=broad-exception-caught
                 error_message = "<Failed to parse Vault API error response>"
-            raise VaultAPIError(error_message) from http_error
+            raise vault_exception(error_message) from http_error
 
         return response
 
@@ -135,7 +154,7 @@ class VaultTransit:
             "allow_plaintext_backup": False,
         }
 
-        self.__api_write(api_path, payload)
+        self.__api_write(api_path, payload, AppKeyImportError)
 
     def __prepare_jwt(self, app_id: str) -> str:
         now = int(datetime.now().strftime("%s"))
@@ -178,7 +197,9 @@ class VaultTransit:
             "signature_algorithm": "pkcs1v15",
         }
 
-        response: requests.models.Response = self.__api_write(api_path, payload)
+        response: requests.models.Response = self.__api_write(
+            api_path, payload, JWTSigningError
+        )
 
         signature: str = response.json()["data"]["signature"].removeprefix("vault:v1:")
         signature = self.__b64str(base64.b64decode(signature), urlsafe=True)
@@ -190,4 +211,4 @@ class VaultTransit:
         """Vault Token self-revoke"""
 
         api_path = "/v1/auth/token/revoke-self"
-        self.__api_write(api_path)
+        self.__api_write(api_path, vault_exception=TokenRevokeError)

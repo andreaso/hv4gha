@@ -17,7 +17,15 @@ class TokenResponse(TypedDict, total=False):
 
 
 class GitHubAPIError(Exception):
-    """Error response from the GitHub API"""
+    """Any error response from the GitHub API"""
+
+
+class InstallationLookupError(GitHubAPIError):
+    """Failure to lookup the GitHub App installation ID"""
+
+
+class TokenIssueError(GitHubAPIError):
+    """Failure to issue GitHub Access Token"""
 
 
 class NotInstalledError(Exception):
@@ -65,7 +73,7 @@ class GitHubApp:
                     error_message = http_error.response.json()["message"]
                 except Exception:  # pylint: disable=broad-exception-caught
                     error_message = "<Failed to parse GitHub API error response>"
-                raise GitHubAPIError(error_message) from http_error
+                raise InstallationLookupError(error_message) from http_error
 
             for installation in response.json():
                 if installation["account"]["login"].lower() == self.account.lower():
@@ -122,7 +130,7 @@ class GitHubApp:
                 error_message = http_error.response.json()["message"]
             except Exception:  # pylint: disable=broad-exception-caught
                 error_message = "<Failed to parse GitHub API error response>"
-            raise GitHubAPIError(error_message) from http_error
+            raise TokenIssueError(error_message) from http_error
 
         expiry = datetime.strptime(
             response.json()["expires_at"], "%Y-%m-%dT%H:%M:%SZ"
