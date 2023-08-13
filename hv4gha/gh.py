@@ -1,10 +1,16 @@
 """GitHub specific code"""
 
 import json
-from datetime import datetime, timezone
-from typing import Final, TypedDict
+from datetime import datetime
+from typing import Final, Literal, TypedDict
 
 import requests
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
+
+PermARW = None | Literal["admin", "read", "write"]
+PermRW = None | Literal["read", "write"]
+PermR = None | Literal["read"]
+PermW = None | Literal["write"]
 
 
 class TokenResponse(TypedDict, total=False):
@@ -30,6 +36,89 @@ class TokenIssueError(GitHubAPIError):
 
 class NotInstalledError(Exception):
     """The GitHub App isn't installed in the specified account"""
+
+
+class GitHubErrors(BaseModel):
+    """
+    https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28
+    """
+
+    message: str
+
+
+class AccountInfo(BaseModel):
+    """Part of Installation"""
+
+    login: str = Field(
+        max_length=39, pattern=r"^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?$"
+    )
+
+
+class Installation(BaseModel):
+    """
+    https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#list-installations-for-the-authenticated-app
+    """
+
+    id: int
+    account: AccountInfo
+
+
+class TokenPermissions(BaseModel):
+    """Part of AccessToken"""
+
+    # Repository permissions
+    actions: PermRW = None
+    administration: PermRW = None
+    checks: PermRW = None
+    contents: PermRW = None
+    deployments: PermRW = None
+    environments: PermRW = None
+    issues: PermRW = None
+    metadata: PermRW = None
+    packages: PermRW = None
+    pages: PermRW = None
+    pull_requests: PermRW = None
+    repository_hooks: PermRW = None
+    repository_projects: PermARW = None
+    secret_scanning_alerts: PermRW = None
+    secrets: PermRW = None
+    security_events: PermRW = None
+    single_file: PermRW = None
+    statuses: PermRW = None
+    vulnerability_alerts: PermRW = None
+    workflows: PermW = None
+    # Organizational permissions
+    members: PermRW = None
+    organization_administration: PermRW = None
+    organization_custom_roles: PermRW = None
+    organization_announcement_banners: PermRW = None
+    organization_hooks: PermRW = None
+    organization_personal_access_tokens: PermRW = None
+    organization_personal_access_token_requests: PermRW = None
+    organization_plan: PermR = None
+    organization_projects: PermARW = None
+    organization_packages: PermRW = None
+    organization_secrets: PermRW = None
+    organization_self_hosted_runners: PermRW = None
+    organization_user_blocking: PermRW = None
+    team_discussions: PermRW = None
+
+
+class Repository(BaseModel):
+    """Part of AccessToken"""
+
+    name: str = Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")
+
+
+class AccessToken(BaseModel):
+    """
+    https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app
+    """
+
+    token: str
+    expires_at: datetime
+    permissions: TokenPermissions
+    repositories: None | list[Repository] = None
 
 
 class GitHubApp:
@@ -68,16 +157,23 @@ class GitHubApp:
                 )
                 response.raise_for_status()
             except requests.exceptions.HTTPError as http_error:
-                error_message: str
                 try:
-                    error_message = http_error.response.json()["message"]
+                    errors_bm = GitHubErrors(**http_error.response.json())
+                    error_message = errors_bm.message
                 except Exception:  # pylint: disable=broad-exception-caught
                     error_message = "<Failed to parse GitHub API error response>"
                 raise InstallationLookupError(error_message) from http_error
 
-            for installation in response.json():
-                if installation["account"]["login"].lower() == self.account.lower():
-                    return str(installation["id"])
+            try:
+                ita = TypeAdapter(list[Installation])
+                installations = ita.validate_python(response.json())
+            except ValidationError as validation_error:
+                error_message = "<Failed to parse Installations API response>"
+                raise InstallationLookupError(error_message) from validation_error
+
+            for installation in installations:
+                if installation.account.login.lower() == self.account.lower():
+                    return str(installation.id)
 
             if "next" in response.links.keys():
                 pagination_params["page"] += 1
@@ -125,26 +221,28 @@ class GitHubApp:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
-            error_message: str
             try:
-                error_message = http_error.response.json()["message"]
+                errors_bm = GitHubErrors(**http_error.response.json())
+                error_message = errors_bm.message
             except Exception:  # pylint: disable=broad-exception-caught
                 error_message = "<Failed to parse GitHub API error response>"
             raise TokenIssueError(error_message) from http_error
 
-        expiry = datetime.strptime(
-            response.json()["expires_at"], "%Y-%m-%dT%H:%M:%SZ"
-        ).replace(tzinfo=timezone.utc)
+        try:
+            access_token_bm = AccessToken(**response.json())
+        except ValidationError as validation_error:
+            error_message = "<Failed to parse Token Issue API response>"
+            raise TokenIssueError(error_message) from validation_error
 
         access_token: TokenResponse = {
-            "access_token": response.json()["token"],
-            "expires_at": expiry,
-            "permissions": response.json()["permissions"],
+            "access_token": access_token_bm.token,
+            "expires_at": access_token_bm.expires_at,
+            "permissions": access_token_bm.permissions.model_dump(exclude_unset=True),
         }
 
-        if "repositories" in response.json().keys():
+        if access_token_bm.repositories is not None:
             access_token["repositories"] = sorted(
-                [repo["name"] for repo in response.json()["repositories"]]
+                [repo.name for repo in access_token_bm.repositories]
             )
 
         return access_token

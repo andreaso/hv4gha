@@ -11,6 +11,7 @@ readme = "README.md"
 python = "^3.10"
 cryptography = "^41.0.3"
 requests = "^2.31.0"
+pydantic = "^2.1.1"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"

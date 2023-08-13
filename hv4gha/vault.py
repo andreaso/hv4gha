@@ -9,6 +9,7 @@ from typing import Any, Final
 import requests
 from cryptography.hazmat.primitives import hashes, keywrap, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from pydantic import BaseModel, ValidationError
 
 
 class VaultAPIError(Exception):
@@ -29,6 +30,42 @@ class TokenRevokeError(VaultAPIError):
 
 class WrappingKeyDownloadError(VaultAPIError):
     """Failure to download the Vault Transit wrapping key"""
+
+
+class VaultErrors(BaseModel):
+    """
+    https://developer.hashicorp.com/vault/api-docs#error-response
+    """
+
+    errors: list[str]
+
+
+class JWTData(BaseModel):
+    """Part of SignedJWT"""
+
+    signature: str
+
+
+class SignedJWT(BaseModel):
+    """
+    https://developer.hashicorp.com/vault/api-docs/secret/transit#sign-data
+    """
+
+    data: JWTData
+
+
+class KeyData(BaseModel):
+    """Part of WrappingKey"""
+
+    public_key: str
+
+
+class WrappingKey(BaseModel):
+    """
+    https://developer.hashicorp.com/vault/api-docs/secret/transit#get-wrapping-key
+    """
+
+    data: KeyData
 
 
 class VaultTransit:
@@ -74,14 +111,20 @@ class VaultTransit:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
-            error_message: str
             try:
-                error_message = "\n".join(http_error.response.json()["errors"])
+                errors_bm = VaultErrors(**http_error.response.json())
+                error_message = "\n".join(errors_bm.errors)
             except Exception:  # pylint: disable=broad-exception-caught
                 error_message = "<Failed to parse Vault API error response>"
             raise WrappingKeyDownloadError(error_message) from http_error
 
-        wrapping_pem_key = response.json()["data"]["public_key"].encode()
+        try:
+            wrapping_key_bm = WrappingKey(**response.json())
+        except ValidationError as validation_error:
+            error_message = "<Failed to parse Wrapping Key API response>"
+            raise WrappingKeyDownloadError(error_message) from validation_error
+
+        wrapping_pem_key = wrapping_key_bm.data.public_key.encode()
         wrapping_key = serialization.load_pem_public_key(wrapping_pem_key)
 
         if not isinstance(wrapping_key, rsa.RSAPublicKey):
@@ -125,9 +168,9 @@ class VaultTransit:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
-            error_message: str
             try:
-                error_message = "\n".join(http_error.response.json()["errors"])
+                errors_bm = VaultErrors(**http_error.response.json())
+                error_message = "\n".join(errors_bm.errors)
             except Exception:  # pylint: disable=broad-exception-caught
                 error_message = "<Failed to parse Vault API error response>"
             raise vault_exception(error_message) from http_error
@@ -201,7 +244,13 @@ class VaultTransit:
             api_path, payload, JWTSigningError
         )
 
-        signature: str = response.json()["data"]["signature"].removeprefix("vault:v1:")
+        try:
+            signature_bm = SignedJWT(**response.json())
+        except ValidationError as validation_error:
+            error_message = "<Failed to parse Sign JWT API response>"
+            raise JWTSigningError(error_message) from validation_error
+
+        signature = signature_bm.data.signature.removeprefix("vault:v1:")
         signature = self.__b64str(base64.b64decode(signature), urlsafe=True)
 
         jwt_token = header_and_claims + "." + signature
