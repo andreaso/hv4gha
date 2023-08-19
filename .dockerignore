@@ -1,5 +1,6 @@
 *
 !pyproject.toml
+!poetry.lock
 !README.md
 !integration/testrun.py
 !hv4gha

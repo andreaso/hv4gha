@@ -22,6 +22,7 @@ jobs:
     strategy:
       matrix:
         py_version: ["3.10", "3.11"]
+        dependencies: ["constrained", "unconstrained"]
 
     steps:
       - name: Checkout
@@ -40,6 +41,10 @@ jobs:
 
       - name: Install dependencies
         run: poetry install
+
+      - name: Update dependencies
+        if: matrix.dependencies == 'unconstrained'
+        run: poetry update
 
       - name: Check import order
         run: poetry run isort --check hv4gha/ integration/

@@ -2,7 +2,29 @@
 
 version: "3.8"
 services:
-  testrun-py310:
+  testrun-py310-constrained:
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    read_only: true
+    user: 3100:3100
+    build:
+      args:
+        pyver: "3.10"
+        pip_extra: --constraint=/src/constraints.txt
+      context: ..
+      dockerfile: integration/Dockerfile
+    environment:
+      HV4GHA_KEYNAME: test-310-constrained
+      HV4GHA_VAULT_ADDR: http://vault-server:8200
+      HV4GHA_VAULT_TOKEN: BatteryStaple
+    env_file: .env
+    command: [import, issue, issue-scoped]
+    depends_on:
+      - vault-setup
+
+  testrun-py310-unconstrained:
     cap_drop:
       - ALL
     security_opt:
@@ -15,7 +37,7 @@ services:
       context: ..
       dockerfile: integration/Dockerfile
     environment:
-      HV4GHA_KEYNAME: testkey310
+      HV4GHA_KEYNAME: test-310-unconstrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
       HV4GHA_VAULT_TOKEN: BatteryStaple
     env_file: .env
@@ -23,7 +45,29 @@ services:
     depends_on:
       - vault-setup
 
-  testrun-py311:
+  testrun-py311-constrained:
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    read_only: true
+    user: 3110:3110
+    build:
+      args:
+        pyver: "3.11"
+        pip_extra: --constraint=/src/constraints.txt
+      context: ..
+      dockerfile: integration/Dockerfile
+    environment:
+      HV4GHA_KEYNAME: test-311-constrained
+      HV4GHA_VAULT_ADDR: http://vault-server:8200
+      HV4GHA_VAULT_TOKEN: BatteryStaple
+    env_file: .env
+    command: [import, issue, issue-scoped]
+    depends_on:
+      - vault-setup
+
+  testrun-py311-unconstrained:
     cap_drop:
       - ALL
     security_opt:
@@ -36,7 +80,7 @@ services:
       context: ..
       dockerfile: integration/Dockerfile
     environment:
-      HV4GHA_KEYNAME: testkey311
+      HV4GHA_KEYNAME: test-311-unconstrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
       HV4GHA_VAULT_TOKEN: BatteryStaple
     env_file: .env
