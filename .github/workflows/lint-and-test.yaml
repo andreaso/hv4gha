@@ -1,6 +1,6 @@
 ---
 
-name: Linting
+name: Lint and Test
 
 on:
   push:
@@ -47,16 +47,19 @@ jobs:
         run: poetry update
 
       - name: Check import order
-        run: poetry run isort --check hv4gha/ integration/
+        run: poetry run isort --check hv4gha/ integration/ tests/
 
       - name: Check Black formating
-        run: poetry run black --check hv4gha/ integration/
+        run: poetry run black --check hv4gha/ integration/ tests/
 
       - name: Verify type hints
-        run: poetry run mypy --strict hv4gha/ integration/
+        run: poetry run mypy --strict hv4gha/ integration/ tests/
 
       - name: Run Pylint
-        run: poetry run pylint -rn -sn hv4gha/ integration/
+        run: poetry run pylint -rn -sn hv4gha/ integration/ tests/
+
+      - name: Run Pytest
+        run: poetry run pytest
 
   super:
     name: Super-Linter

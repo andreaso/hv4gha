@@ -1,6 +1,6 @@
 ---
 
-name: Testing
+name: Integration
 
 on:
   push:
