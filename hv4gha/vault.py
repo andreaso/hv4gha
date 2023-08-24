@@ -3,7 +3,7 @@
 import base64
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Final
 
 import requests
@@ -185,7 +185,7 @@ class VaultTransit:
 
     @staticmethod
     def __prepare_jwt(app_id: str) -> str:
-        now = int(datetime.now().strftime("%s"))
+        now = int(datetime.now(timezone.utc).timestamp())
         expire = now + 60
 
         header = {
