@@ -184,9 +184,9 @@ class VaultTransit:
         self.__api_write(api_path, payload, AppKeyImportError)
 
     @staticmethod
-    def __prepare_jwt(app_id: str) -> str:
-        now = int(datetime.now(timezone.utc).timestamp())
-        expire = now + 60
+    def __prepare_jwt(app_id: str, now: datetime) -> str:
+        timestamp = int(now.timestamp())
+        expire = timestamp + 60
 
         header = {
             "alg": "RS256",
@@ -194,7 +194,7 @@ class VaultTransit:
         }
 
         claims = {
-            "iat": now,
+            "iat": timestamp,
             "exp": expire,
             "iss": app_id,
         }
@@ -216,7 +216,8 @@ class VaultTransit:
         :return: GitHub App JWT token
         """
 
-        header_and_claims = self.__prepare_jwt(app_id)
+        now = datetime.now(timezone.utc)
+        header_and_claims = self.__prepare_jwt(app_id, now)
 
         api_path = f"/v1/{self.transit_backend}/sign/{key_name}"
         payload = {
