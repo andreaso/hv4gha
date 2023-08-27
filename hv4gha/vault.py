@@ -2,16 +2,15 @@
 
 import base64
 import json
-import os
 from datetime import datetime, timezone
 from typing import Any, Final
 
 import requests
-from cryptography.hazmat.primitives import hashes, keywrap, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from pydantic import BaseModel, ValidationError
 
-from .helpers import b64str, private_pem_to_der
+from .helpers import b64str, prepare_gh_app_jwt, private_pem_to_der, vault_wrap_key
 
 
 class VaultAPIError(Exception):
@@ -115,23 +114,6 @@ class VaultTransit:
 
         return wrapping_key
 
-    @staticmethod
-    def __wrap_key(der_app_key: bytes, wrapping_key: rsa.RSAPublicKey) -> str:
-        aes_key = os.getrandom(32)
-
-        wrapped_app_key = keywrap.aes_key_wrap_with_padding(aes_key, der_app_key)
-        wrapped_aes_key = wrapping_key.encrypt(
-            aes_key,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None,
-            ),
-        )
-
-        wrapped_b64 = b64str(wrapped_aes_key + wrapped_app_key)
-        return wrapped_b64
-
     def __api_write(
         self,
         api_path: str,
@@ -170,7 +152,7 @@ class VaultTransit:
         """
         der_app_key: bytes = private_pem_to_der(pem_app_key)
         wrapping_key: rsa.RSAPublicKey = self.__download_wrapping_key()
-        wrapped_b64: str = self.__wrap_key(der_app_key, wrapping_key)
+        wrapped_b64: str = vault_wrap_key(der_app_key, wrapping_key)
 
         api_path = f"/v1/{self.transit_backend}/keys/{key_name}/import"
         payload = {
@@ -182,28 +164,6 @@ class VaultTransit:
         }
 
         self.__api_write(api_path, payload, AppKeyImportError)
-
-    @staticmethod
-    def __prepare_jwt(app_id: str, now: datetime) -> str:
-        timestamp = int(now.timestamp())
-        expire = timestamp + 60
-
-        header = {
-            "alg": "RS256",
-            "typ": "JWT",
-        }
-
-        claims = {
-            "iat": timestamp,
-            "exp": expire,
-            "iss": app_id,
-        }
-
-        b64_header = b64str(json.dumps(header), urlsafe=True)
-        b64_claims = b64str(json.dumps(claims), urlsafe=True)
-
-        header_and_claims = b64_header + "." + b64_claims
-        return header_and_claims
 
     def sign_jwt(self, key_name: str, app_id: str) -> str:
         """
@@ -217,7 +177,7 @@ class VaultTransit:
         """
 
         now = datetime.now(timezone.utc)
-        header_and_claims = self.__prepare_jwt(app_id, now)
+        header_and_claims = prepare_gh_app_jwt(app_id, now)
 
         api_path = f"/v1/{self.transit_backend}/sign/{key_name}"
         payload = {
