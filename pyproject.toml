@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hv4gha"
-version = "0.2.0"
+version = "0.2.1"
 description = "Use HashiCorp Vault to manage a GitHub App's private RSA key."
 authors = ["Andreas Olsson <andreas@arrakis.se>"]
 repository = "https://github.com/andreaso/hv4gha"
