@@ -10,7 +10,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: "15 4 * * 6"
+    - cron: "15 4 1 * *"
 
 permissions:
   actions: read
