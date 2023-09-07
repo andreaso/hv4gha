@@ -44,7 +44,7 @@ def vault_unwrap_key(wrapped_app_key: str) -> bytes:
     return unwrapped_app_der
 
 
-def test_pem_to_dir() -> None:
+def test_pem_to_der() -> None:
     with open("./tests/data/dummy_private_key.pem", "rb") as pfh:
         private_pem = pfh.read()
     with open("./tests/data/dummy_private_key.der", "rb") as dfh:
