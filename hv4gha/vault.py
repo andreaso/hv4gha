@@ -93,11 +93,13 @@ class VaultTransit:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
+            error_message = "<Failed to parse Vault API error response>"
             try:
-                errors_bm = VaultErrors(**http_error.response.json())
-                error_message = "\n".join(errors_bm.errors)
+                if http_error.response is not None:
+                    errors_bm = VaultErrors(**http_error.response.json())
+                    error_message = "\n".join(errors_bm.errors)
             except Exception:  # pylint: disable=broad-exception-caught
-                error_message = "<Failed to parse Vault API error response>"
+                pass
             raise WrappingKeyDownloadError(error_message) from http_error
 
         try:
@@ -134,11 +136,13 @@ class VaultTransit:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
+            error_message = "<Failed to parse Vault API error response>"
             try:
-                errors_bm = VaultErrors(**http_error.response.json())
-                error_message = "\n".join(errors_bm.errors)
+                if http_error.response is not None:
+                    errors_bm = VaultErrors(**http_error.response.json())
+                    error_message = "\n".join(errors_bm.errors)
             except Exception:  # pylint: disable=broad-exception-caught
-                error_message = "<Failed to parse Vault API error response>"
+                pass
             raise vault_exception(error_message) from http_error
 
         return response

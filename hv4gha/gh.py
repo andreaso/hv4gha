@@ -157,11 +157,13 @@ class GitHubApp:
                 )
                 response.raise_for_status()
             except requests.exceptions.HTTPError as http_error:
+                error_message = "<Failed to parse GitHub API error response>"
                 try:
-                    errors_bm = GitHubErrors(**http_error.response.json())
-                    error_message = errors_bm.message
+                    if http_error.response is not None:
+                        errors_bm = GitHubErrors(**http_error.response.json())
+                        error_message = errors_bm.message
                 except Exception:  # pylint: disable=broad-exception-caught
-                    error_message = "<Failed to parse GitHub API error response>"
+                    pass
                 raise InstallationLookupError(error_message) from http_error
 
             try:
@@ -221,11 +223,13 @@ class GitHubApp:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
+            error_message = "<Failed to parse GitHub API error response>"
             try:
-                errors_bm = GitHubErrors(**http_error.response.json())
-                error_message = errors_bm.message
+                if http_error.response is not None:
+                    errors_bm = GitHubErrors(**http_error.response.json())
+                    error_message = errors_bm.message
             except Exception:  # pylint: disable=broad-exception-caught
-                error_message = "<Failed to parse GitHub API error response>"
+                pass
             raise TokenIssueError(error_message) from http_error
 
         try:
