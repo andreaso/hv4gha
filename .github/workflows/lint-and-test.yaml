@@ -39,6 +39,9 @@ jobs:
       - name: Use Python ${{ matrix.py_version }} with Poetry
         run: poetry env use python${{ matrix.py_version }}
 
+      - name: Poetry self-check
+        run: poetry check
+
       - name: Install dependencies
         run: poetry install
 
