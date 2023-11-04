@@ -3,11 +3,12 @@
 ARG pyver=3.11
 FROM python:${pyver}-slim-bookworm AS python-prepare
 
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir poetry poetry-plugin-export
 
 WORKDIR /pip
 COPY pyproject.toml poetry.lock /pip/
 
+RUN poetry config warnings.export false
 RUN poetry export --without-hashes --format=requirements.txt --output=constraints.txt
 
 
