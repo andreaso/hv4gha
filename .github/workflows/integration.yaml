@@ -71,3 +71,21 @@ jobs:
 
       - name: Issue scoped Access Token (Python 3.11) (unconstrained)
         run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311-unconstrained issue-scoped
+
+      - name: Import App key (Python 3.12) (constrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-constrained import
+
+      - name: Issue Access Token (Python 3.12) (constrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-constrained issue
+
+      - name: Issue scoped Access Token (Python 3.12) (constrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-constrained issue-scoped
+
+      - name: Import App key (Python 3.12) (unconstrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-unconstrained import
+
+      - name: Issue Access Token (Python 3.12) (unconstrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-unconstrained issue
+
+      - name: Issue scoped Access Token (Python 3.12) (unconstrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-unconstrained issue-scoped

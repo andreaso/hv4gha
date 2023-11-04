@@ -21,7 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        py_version: ["3.10", "3.11"]
+        py_version: ["3.10", "3.11", "3.12"]
         dependencies: ["constrained", "unconstrained"]
 
     steps:
