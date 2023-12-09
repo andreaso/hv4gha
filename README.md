@@ -4,8 +4,12 @@ Python library for using [HashiCorp Vault][1]'s [Transit Engine][2] to
 manage a GitHub App's private RSA key. More precisely, the library
 provides the following pieces of functionality.
 
-* Perform initial import of the App's private key into Vault
-* Have Vault sign the needed JWT and then request a GitHub Access Token
+* Perform initial one-way import of the App's private key into Vault
+* Issue (short-lived) GitHub Access Token
+  * Have Vault sign a JWT using the App's private key
+  * Exchange that JWT for a GitHub Access Token
+
+Conceptually Vault here fills the role of an HSM or a Cloud KMS.
 
 See [Authenticating as a GitHub App installation (GitHub Docs)][3] for context.
 
