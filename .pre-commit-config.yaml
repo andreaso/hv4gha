@@ -11,17 +11,16 @@ repos:
 
   - repo: local
     hooks:
-      - id: isort
-        name: isort
-        entry: poetry run isort
+      - id: ruff-format
+        name: ruff-format
+        entry: poetry run ruff format --force-exclude
         language: system
         types_or: [python, pyi]
         require_serial: true
-        args: ["--filter-files"]
 
-      - id: black
-        name: black
-        entry: poetry run black
+      - id: ruff-check
+        name: ruff-check
+        entry: poetry run ruff check --force-exclude
         language: system
         types_or: [python, pyi]
         require_serial: true
@@ -34,10 +33,3 @@ repos:
         exclude: '^tests/'
         require_serial: true
         args: ["--strict"]
-
-      - id: pylint
-        name: pylint
-        entry: poetry run pylint
-        language: system
-        types: [python]
-        args: ["-rn", "-sn"]
