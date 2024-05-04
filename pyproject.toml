@@ -20,11 +20,8 @@ types-requests = "^2.31.0.20240406"
 pytest = "^8.2.0"
 ruff = "^0.4.2"
 
-[tool.isort]
-profile = "black"
-
-[tool.pylint.'MAIN']
-disable="duplicate-code,too-few-public-methods"
+[tool.ruff]
+target-version = "py310"
 
 [build-system]
 requires = ["poetry-core"]
