@@ -124,7 +124,7 @@ class AccessToken(BaseModel):
 class GitHubApp:
     """GitHub App Access Tokens, etc"""
 
-    def __init__(self, account: str, jwt_token: str):
+    def __init__(self, *, account: str, jwt_token: str):
         """
         :param app_id: GitHub App ID.
         :param jwt_token: GitHub App JWT token
@@ -186,6 +186,7 @@ class GitHubApp:
 
     def issue_token(
         self,
+        *,
         permissions: None | dict[str, str] = None,
         repositories: None | list[str] = None,
     ) -> TokenResponse:

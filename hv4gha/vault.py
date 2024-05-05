@@ -72,7 +72,7 @@ class WrappingKey(BaseModel):
 class VaultTransit:
     """Interact with Vault's Transit Secrets Engine"""
 
-    def __init__(self, vault_addr: str, vault_token: str, transit_backend: str):
+    def __init__(self, *, vault_addr: str, vault_token: str, transit_backend: str):
         """
         :param vault_addr: Vault instance VAULT_ADDR.
         :param vault_token: Vault instance VAULT_TOKEN.
@@ -147,7 +147,7 @@ class VaultTransit:
 
         return response
 
-    def import_key(self, key_name: str, pem_app_key: bytes) -> None:
+    def import_key(self, *, key_name: str, pem_app_key: bytes) -> None:
         """
         Import GitHub App key
 
@@ -169,7 +169,7 @@ class VaultTransit:
 
         self.__api_write(api_path, payload, AppKeyImportError)
 
-    def sign_jwt(self, key_name: str, app_id: str) -> str:
+    def sign_jwt(self, *, key_name: str, app_id: str) -> str:
         """
         Sign JWT token to authenticate towards GitHub
 

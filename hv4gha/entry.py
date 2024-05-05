@@ -6,6 +6,7 @@ from .vault import VaultTransit
 
 def import_app_key(
     pem_key: bytes | str,
+    *,
     key_name: str,
     vault_addr: str,
     vault_token: str,
@@ -26,14 +27,22 @@ def import_app_key(
     if isinstance(pem_key, str):
         pem_key = pem_key.encode()
 
-    transit = VaultTransit(vault_addr, vault_token, transit_backend)
-    transit.import_key(key_name, pem_key)
+    transit = VaultTransit(
+        vault_addr=vault_addr,
+        vault_token=vault_token,
+        transit_backend=transit_backend,
+    )
+    transit.import_key(
+        key_name=key_name,
+        pem_app_key=pem_key,
+    )
 
     if revoke_vault_token:
         transit.revoke_token()
 
 
 def issue_access_token(
+    *,
     key_name: str,
     vault_addr: str,
     vault_token: str,
@@ -64,11 +73,24 @@ def issue_access_token(
     if isinstance(app_id, int):
         app_id = str(app_id)
 
-    transit = VaultTransit(vault_addr, vault_token, transit_backend)
-    jwt: str = transit.sign_jwt(key_name, app_id)
+    transit = VaultTransit(
+        vault_addr=vault_addr,
+        vault_token=vault_token,
+        transit_backend=transit_backend,
+    )
+    jwt: str = transit.sign_jwt(
+        key_name=key_name,
+        app_id=app_id,
+    )
 
-    ghapp = GitHubApp(account, jwt)
-    access_token: TokenResponse = ghapp.issue_token(permissions, repositories)
+    ghapp = GitHubApp(
+        account=account,
+        jwt_token=jwt,
+    )
+    access_token: TokenResponse = ghapp.issue_token(
+        permissions=permissions,
+        repositories=repositories,
+    )
 
     if revoke_vault_token:
         transit.revoke_token()
