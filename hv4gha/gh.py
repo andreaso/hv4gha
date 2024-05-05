@@ -162,7 +162,7 @@ class GitHubApp:
                     if http_error.response is not None:
                         errors_bm = GitHubErrors(**http_error.response.json())
                         error_message = errors_bm.message
-                except Exception:  # pylint: disable=broad-exception-caught
+                except Exception:
                     pass
                 raise InstallationLookupError(error_message) from http_error
 
@@ -228,7 +228,7 @@ class GitHubApp:
                 if http_error.response is not None:
                     errors_bm = GitHubErrors(**http_error.response.json())
                     error_message = errors_bm.message
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception:
                 pass
             raise TokenIssueError(error_message) from http_error
 

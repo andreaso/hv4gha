@@ -98,7 +98,7 @@ class VaultTransit:
                 if http_error.response is not None:
                     errors_bm = VaultErrors(**http_error.response.json())
                     error_message = "\n".join(errors_bm.errors)
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception:
                 pass
             raise WrappingKeyDownloadError(error_message) from http_error
 
@@ -141,7 +141,7 @@ class VaultTransit:
                 if http_error.response is not None:
                     errors_bm = VaultErrors(**http_error.response.json())
                     error_message = "\n".join(errors_bm.errors)
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception:
                 pass
             raise vault_exception(error_message) from http_error
 

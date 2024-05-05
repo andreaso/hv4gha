@@ -5,7 +5,6 @@ from .vault import VaultTransit
 
 
 def import_app_key(
-    # pylint: disable=too-many-arguments
     pem_key: bytes | str,
     key_name: str,
     vault_addr: str,
@@ -35,7 +34,6 @@ def import_app_key(
 
 
 def issue_access_token(
-    # pylint: disable=too-many-arguments
     key_name: str,
     vault_addr: str,
     vault_token: str,

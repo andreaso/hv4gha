@@ -1,7 +1,5 @@
 """Testing of helper functions"""
 
-# pylint: disable=missing-function-docstring
-
 import json
 from base64 import b64decode
 from datetime import datetime, timezone
