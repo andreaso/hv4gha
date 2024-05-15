@@ -1,0 +1,39 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o noglob
+set -o pipefail
+
+# Required environment variables
+: "$VAULT_ADDR"
+: "$VAULT_TOKEN"
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 key-name" >&2
+    exit 1
+fi
+
+key_name="$1"
+import_policy_name="import-${key_name}"
+issue_policy_name="issue-${key_name}"
+
+cat <<EOF |
+path "transit/wrapping_key" {
+  capabilities = ["read"]
+}
+
+path "transit/keys/${key_name}/import" {
+  capabilities = ["update"]
+}
+EOF
+vault policy write "$import_policy_name" -
+
+cat <<EOF |
+path "transit/sign/${key_name}" {
+  capabilities = ["update"]
+}
+EOF
+vault policy write "$issue_policy_name" -
+
+vault token create -policy="$import_policy_name" -ttl=15m -type=batch -orphan -field=token
+vault token create -policy="$issue_policy_name" -ttl=15m -type=batch -orphan -field=token
