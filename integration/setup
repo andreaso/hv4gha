@@ -1,0 +1,34 @@
+#!/bin/ash
+set -o errexit
+set -o nounset
+set -o noglob
+set -o pipefail
+
+# Required env variables
+: "$VAULT_ADDR"
+: "$VAULT_TOKEN"
+: "$HVGHA_VAULT_IMPORT_TOKEN"
+: "$HVGHA_VAULT_SIGN_TOKEN"
+
+vault secrets enable transit
+
+cat <<EOF |
+path "transit/wrapping_key" {
+  capabilities = ["read"]
+}
+
+path "transit/keys/+/import" {
+  capabilities = ["update"]
+}
+EOF
+vault policy write import-key -
+
+cat <<EOF |
+path "transit/sign/+" {
+  capabilities = ["update"]
+}
+EOF
+vault policy write sign-token -
+
+vault token create -no-default-policy -policy=import-key -id="$HVGHA_VAULT_IMPORT_TOKEN" -field=token
+vault token create -no-default-policy -policy=sign-token -id="$HVGHA_VAULT_SIGN_TOKEN" -field=token
