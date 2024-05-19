@@ -1,6 +1,5 @@
 ---
 
-version: "3.8"
 services:
   testrun-py310-constrained:
     cap_drop:
