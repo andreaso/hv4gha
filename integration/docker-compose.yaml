@@ -17,7 +17,8 @@ services:
     environment:
       HV4GHA_KEYNAME: test-310-constrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
-      HV4GHA_VAULT_TOKEN: BatteryStaple
+      HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
     env_file: .env
     command: [import, issue, issue-scoped]
     depends_on:
@@ -38,7 +39,8 @@ services:
     environment:
       HV4GHA_KEYNAME: test-310-unconstrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
-      HV4GHA_VAULT_TOKEN: BatteryStaple
+      HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
     env_file: .env
     command: [import, issue, issue-scoped]
     depends_on:
@@ -60,7 +62,8 @@ services:
     environment:
       HV4GHA_KEYNAME: test-311-constrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
-      HV4GHA_VAULT_TOKEN: BatteryStaple
+      HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
     env_file: .env
     command: [import, issue, issue-scoped]
     depends_on:
@@ -81,7 +84,8 @@ services:
     environment:
       HV4GHA_KEYNAME: test-311-unconstrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
-      HV4GHA_VAULT_TOKEN: BatteryStaple
+      HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
     env_file: .env
     command: [import, issue, issue-scoped]
     depends_on:
@@ -103,7 +107,8 @@ services:
     environment:
       HV4GHA_KEYNAME: test-312-constrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
-      HV4GHA_VAULT_TOKEN: BatteryStaple
+      HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
     env_file: .env
     command: [import, issue, issue-scoped]
     depends_on:
@@ -124,7 +129,8 @@ services:
     environment:
       HV4GHA_KEYNAME: test-312-unconstrained
       HV4GHA_VAULT_ADDR: http://vault-server:8200
-      HV4GHA_VAULT_TOKEN: BatteryStaple
+      HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
     env_file: .env
     command: [import, issue, issue-scoped]
     depends_on:
@@ -133,10 +139,13 @@ services:
   vault-setup:
     image: hashicorp/vault
     environment:
+      HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
       VAULT_TOKEN: BatteryStaple
       VAULT_ADDR: http://vault-server:8200
-    entrypoint: /bin/vault
-    command: [secrets, enable, transit]
+    volumes:
+      - ./setup:/mnt/setup
+    entrypoint: /mnt/setup
     depends_on:
       vault-server:
         condition: service_healthy

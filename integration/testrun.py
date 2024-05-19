@@ -28,7 +28,7 @@ def key_import() -> None:
         pem_key=b64decode(os.environ["HV4GHA_APP_KEY_B64"]),
         key_name=os.environ["HV4GHA_KEYNAME"],
         vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
-        vault_token=os.environ["HV4GHA_VAULT_TOKEN"],
+        vault_token=os.environ["HVGHA_VAULT_IMPORT_TOKEN"],
     )
 
 
@@ -38,7 +38,7 @@ def issue() -> None:
     issue_access_token(
         key_name=os.environ["HV4GHA_KEYNAME"],
         vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
-        vault_token=os.environ["HV4GHA_VAULT_TOKEN"],
+        vault_token=os.environ["HVGHA_VAULT_SIGN_TOKEN"],
         app_id=os.environ["HV4GHA_APP_ID"],
         account=os.environ["HV4GHA_ACCOUNT"],
     )
@@ -52,7 +52,7 @@ def issue_scoped() -> None:
     access_token: TokenResponse = issue_access_token(
         key_name=os.environ["HV4GHA_KEYNAME"],
         vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
-        vault_token=os.environ["HV4GHA_VAULT_TOKEN"],
+        vault_token=os.environ["HVGHA_VAULT_SIGN_TOKEN"],
         app_id=os.environ["HV4GHA_APP_ID"],
         account=os.environ["HV4GHA_ACCOUNT"],
         permissions=req_perms,
