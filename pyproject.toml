@@ -9,7 +9,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
-certifi = ">=2024.2.2"
+certifi = ">=2024.7.4"
 cryptography = ">=41.0.4"
 requests = "^2.31.0"
 pydantic = "^2.1.1"
