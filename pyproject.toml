@@ -8,7 +8,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.13"
+python = ">=3.10, <3.14"
 certifi = ">=2024.7.4"
 cryptography = ">=43.0.1"
 requests = "^2.31.0"
