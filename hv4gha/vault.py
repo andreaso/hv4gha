@@ -9,6 +9,7 @@ import requests
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from pydantic import BaseModel, ValidationError
+from typing_extensions import TypedDict
 
 from .helpers import b64str, prepare_gh_app_jwt, private_pem_to_der, vault_wrap_key
 
@@ -41,7 +42,7 @@ class VaultErrors(BaseModel):
     errors: list[str]
 
 
-class JWTData(BaseModel):
+class JWTData(TypedDict):
     """Part of SignedJWT"""
 
     signature: str
@@ -55,7 +56,7 @@ class SignedJWT(BaseModel):
     data: JWTData
 
 
-class KeyData(BaseModel):
+class KeyData(TypedDict):
     """Part of WrappingKey"""
 
     public_key: str
@@ -108,7 +109,7 @@ class VaultTransit:
             error_message = "<Failed to parse Wrapping Key API response>"
             raise WrappingKeyDownloadError(error_message) from validation_error
 
-        wrapping_pem_key = wrapping_key_bm.data.public_key.encode()
+        wrapping_pem_key = wrapping_key_bm.data["public_key"].encode()
         wrapping_key = serialization.load_pem_public_key(wrapping_pem_key)
 
         if not isinstance(wrapping_key, rsa.RSAPublicKey):
@@ -200,7 +201,7 @@ class VaultTransit:
             error_message = "<Failed to parse Sign JWT API response>"
             raise JWTSigningError(error_message) from validation_error
 
-        signature = signature_bm.data.signature.removeprefix("vault:v1:")
+        signature = signature_bm.data["signature"].removeprefix("vault:v1:")
         signature = b64str(base64.b64decode(signature), urlsafe=True)
 
         jwt_token = header_and_claims + "." + signature

@@ -6,9 +6,10 @@ import sys
 from base64 import b64decode
 
 from hv4gha import TokenResponse, import_app_key, issue_access_token
+from hv4gha.gh import TokenPermissions
 
 
-def _check_perms(requested: dict[str, str], result: dict[str, str]) -> None:
+def _check_perms(requested: dict[str, str], result: TokenPermissions) -> None:
     result.pop("metadata")  # Clear default permission
     complaint = "Returned permissions does not match requested permissions"
     assert requested == result, complaint

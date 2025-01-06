@@ -2,24 +2,16 @@
 
 import json
 from datetime import datetime
-from typing import Annotated, Final, Literal, TypedDict
+from typing import Annotated, Final, Literal
 
 import requests
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
+from typing_extensions import TypedDict
 
-PermARW = None | Literal["admin", "read", "write"]
-PermRW = None | Literal["read", "write"]
-PermR = None | Literal["read"]
-PermW = None | Literal["write"]
-
-
-class TokenResponse(TypedDict, total=False):
-    """Typing for customized Access Token response"""
-
-    access_token: str
-    expires_at: datetime
-    permissions: dict[str, str]
-    repositories: list[str]
+PermARW = Literal["admin", "read", "write"]
+PermRW = Literal["read", "write"]
+PermR = Literal["read"]
+PermW = Literal["write"]
 
 
 class GitHubAPIError(Exception):
@@ -46,7 +38,7 @@ class GitHubErrors(BaseModel):
     message: str
 
 
-class AccountInfo(BaseModel):
+class AccountInfo(TypedDict):
     """Part of Installation"""
 
     login: Annotated[
@@ -63,48 +55,48 @@ class Installation(BaseModel):
     account: AccountInfo
 
 
-class TokenPermissions(BaseModel):
+class TokenPermissions(TypedDict, total=False):
     """Part of AccessToken"""
 
     # Repository permissions
-    actions: PermRW = None
-    administration: PermRW = None
-    checks: PermRW = None
-    contents: PermRW = None
-    deployments: PermRW = None
-    environments: PermRW = None
-    issues: PermRW = None
-    metadata: PermRW = None
-    packages: PermRW = None
-    pages: PermRW = None
-    pull_requests: PermRW = None
-    repository_hooks: PermRW = None
-    repository_projects: PermARW = None
-    secret_scanning_alerts: PermRW = None
-    secrets: PermRW = None
-    security_events: PermRW = None
-    single_file: PermRW = None
-    statuses: PermRW = None
-    vulnerability_alerts: PermRW = None
-    workflows: PermW = None
+    actions: PermRW
+    administration: PermRW
+    checks: PermRW
+    contents: PermRW
+    deployments: PermRW
+    environments: PermRW
+    issues: PermRW
+    metadata: PermRW
+    packages: PermRW
+    pages: PermRW
+    pull_requests: PermRW
+    repository_hooks: PermRW
+    repository_projects: PermARW
+    secret_scanning_alerts: PermRW
+    secrets: PermRW
+    security_events: PermRW
+    single_file: PermRW
+    statuses: PermRW
+    vulnerability_alerts: PermRW
+    workflows: PermW
     # Organizational permissions
-    members: PermRW = None
-    organization_administration: PermRW = None
-    organization_custom_roles: PermRW = None
-    organization_announcement_banners: PermRW = None
-    organization_hooks: PermRW = None
-    organization_personal_access_tokens: PermRW = None
-    organization_personal_access_token_requests: PermRW = None
-    organization_plan: PermR = None
-    organization_projects: PermARW = None
-    organization_packages: PermRW = None
-    organization_secrets: PermRW = None
-    organization_self_hosted_runners: PermRW = None
-    organization_user_blocking: PermRW = None
-    team_discussions: PermRW = None
+    members: PermRW
+    organization_administration: PermRW
+    organization_custom_roles: PermRW
+    organization_announcement_banners: PermRW
+    organization_hooks: PermRW
+    organization_personal_access_tokens: PermRW
+    organization_personal_access_token_requests: PermRW
+    organization_plan: PermR
+    organization_projects: PermARW
+    organization_packages: PermRW
+    organization_secrets: PermRW
+    organization_self_hosted_runners: PermRW
+    organization_user_blocking: PermRW
+    team_discussions: PermRW
 
 
-class Repository(BaseModel):
+class Repository(TypedDict):
     """Part of AccessToken"""
 
     name: Annotated[str, Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")]
@@ -119,6 +111,15 @@ class AccessToken(BaseModel):
     expires_at: datetime
     permissions: TokenPermissions
     repositories: None | list[Repository] = None
+
+
+class TokenResponse(TypedDict, total=False):
+    """Typing for customized Access Token response"""
+
+    access_token: str
+    expires_at: datetime
+    permissions: TokenPermissions
+    repositories: list[str]
 
 
 class GitHubApp:
@@ -174,7 +175,7 @@ class GitHubApp:
                 raise InstallationLookupError(error_message) from validation_error
 
             for installation in installations:
-                if installation.account.login.lower() == self.account.lower():
+                if installation.account["login"].lower() == self.account.lower():
                     return str(installation.id)
 
             if "next" in response.links:
@@ -242,12 +243,12 @@ class GitHubApp:
         access_token: TokenResponse = {
             "access_token": access_token_bm.token,
             "expires_at": access_token_bm.expires_at,
-            "permissions": access_token_bm.permissions.model_dump(exclude_unset=True),
+            "permissions": access_token_bm.permissions,
         }
 
         if access_token_bm.repositories is not None:
             access_token["repositories"] = sorted(
-                [repo.name for repo in access_token_bm.repositories]
+                [repo["name"] for repo in access_token_bm.repositories]
             )
 
         return access_token
