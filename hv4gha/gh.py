@@ -177,7 +177,7 @@ class GitHubApp:
                 if installation.account.login.lower() == self.account.lower():
                     return str(installation.id)
 
-            if "next" in response.links.keys():
+            if "next" in response.links:
                 pagination_params["page"] += 1
                 more = True
 
