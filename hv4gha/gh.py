@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import Final, Literal, TypedDict
+from typing import Annotated, Final, Literal, TypedDict
 
 import requests
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
@@ -49,9 +49,9 @@ class GitHubErrors(BaseModel):
 class AccountInfo(BaseModel):
     """Part of Installation"""
 
-    login: str = Field(
-        max_length=39, pattern=r"^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?$"
-    )
+    login: Annotated[
+        str, Field(max_length=39, pattern=r"^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?$")
+    ]
 
 
 class Installation(BaseModel):
@@ -107,7 +107,7 @@ class TokenPermissions(BaseModel):
 class Repository(BaseModel):
     """Part of AccessToken"""
 
-    name: str = Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")
+    name: Annotated[str, Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")]
 
 
 class AccessToken(BaseModel):
