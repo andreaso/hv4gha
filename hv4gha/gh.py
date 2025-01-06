@@ -6,7 +6,7 @@ from typing import Annotated, Final, Literal
 
 import requests
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 PermARW = Literal["admin", "read", "write"]
 PermRW = Literal["read", "write"]
@@ -113,13 +113,13 @@ class AccessToken(BaseModel):
     repositories: None | list[Repository] = None
 
 
-class TokenResponse(TypedDict, total=False):
+class TokenResponse(TypedDict):
     """Typing for customized Access Token response"""
 
     access_token: str
     expires_at: datetime
     permissions: TokenPermissions
-    repositories: list[str]
+    repositories: NotRequired[list[str]]
 
 
 class GitHubApp:
