@@ -114,23 +114,19 @@ class VaultTransit:
         self,
         api_path: str,
         payload: None | dict[str, Any] = None,
-        vault_exception: type[Exception] = VaultAPIError,
     ) -> requests.models.Response:
         update_url = self.vault_addr + api_path
 
         if payload is None:
             payload = {}
 
-        try:
-            response = requests.post(
-                update_url,
-                headers=self.auth_headers,
-                data=json.dumps(payload),
-                timeout=10,
-            )
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as http_error:
-            raise vault_exception(http_error.response.text) from http_error
+        response = requests.post(
+            update_url,
+            headers=self.auth_headers,
+            data=json.dumps(payload),
+            timeout=10,
+        )
+        response.raise_for_status()
 
         return response
 
@@ -154,7 +150,10 @@ class VaultTransit:
             "allow_plaintext_backup": False,
         }
 
-        self.__api_write(api_path, payload, AppKeyImportError)
+        try:
+            self.__api_write(api_path, payload)
+        except requests.exceptions.HTTPError as http_error:
+            raise AppKeyImportError(http_error.response.text) from http_error
 
     def sign_jwt(self, *, key_name: str, app_id: str) -> str:
         """
@@ -177,9 +176,10 @@ class VaultTransit:
             "signature_algorithm": "pkcs1v15",
         }
 
-        response: requests.models.Response = self.__api_write(
-            api_path, payload, JWTSigningError
-        )
+        try:
+            response: requests.models.Response = self.__api_write(api_path, payload)
+        except requests.exceptions.HTTPError as http_error:
+            raise JWTSigningError(http_error.response.text) from http_error
 
         try:
             signature_bm = SignedJWT(**response.json())
@@ -197,4 +197,8 @@ class VaultTransit:
         """Vault Token self-revoke"""
 
         api_path = "/v1/auth/token/revoke-self"
-        self.__api_write(api_path, vault_exception=TokenRevokeError)
+
+        try:
+            self.__api_write(api_path)
+        except requests.exceptions.HTTPError as http_error:
+            raise TokenRevokeError(http_error.response.text) from http_error
