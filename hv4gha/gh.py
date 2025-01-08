@@ -30,14 +30,6 @@ class NotInstalledError(Exception):
     """The GitHub App isn't installed in the specified account"""
 
 
-class GitHubErrors(BaseModel):
-    """
-    https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28
-    """
-
-    message: str
-
-
 class AccountInfo(TypedDict):
     """Part of Installation"""
 
@@ -158,14 +150,7 @@ class GitHubApp:
                 )
                 response.raise_for_status()
             except requests.exceptions.HTTPError as http_error:
-                error_message = "<Failed to parse GitHub API error response>"
-                try:
-                    if http_error.response is not None:
-                        errors_bm = GitHubErrors(**http_error.response.json())
-                        error_message = errors_bm.message
-                except Exception:
-                    pass
-                raise InstallationLookupError(error_message) from http_error
+                raise InstallationLookupError(http_error.response.text) from http_error
 
             try:
                 ita = TypeAdapter(list[Installation])
@@ -225,14 +210,7 @@ class GitHubApp:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
-            error_message = "<Failed to parse GitHub API error response>"
-            try:
-                if http_error.response is not None:
-                    errors_bm = GitHubErrors(**http_error.response.json())
-                    error_message = errors_bm.message
-            except Exception:
-                pass
-            raise TokenIssueError(error_message) from http_error
+            raise TokenIssueError(http_error.response.text) from http_error
 
         try:
             access_token_bm = AccessToken(**response.json())

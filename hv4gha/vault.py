@@ -94,14 +94,7 @@ class VaultTransit:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
-            error_message = "<Failed to parse Vault API error response>"
-            try:
-                if http_error.response is not None:
-                    errors_bm = VaultErrors(**http_error.response.json())
-                    error_message = "\n".join(errors_bm.errors)
-            except Exception:
-                pass
-            raise WrappingKeyDownloadError(error_message) from http_error
+            raise WrappingKeyDownloadError(http_error.response.text) from http_error
 
         try:
             wrapping_key_bm = WrappingKey(**response.json())
@@ -137,14 +130,7 @@ class VaultTransit:
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as http_error:
-            error_message = "<Failed to parse Vault API error response>"
-            try:
-                if http_error.response is not None:
-                    errors_bm = VaultErrors(**http_error.response.json())
-                    error_message = "\n".join(errors_bm.errors)
-            except Exception:
-                pass
-            raise vault_exception(error_message) from http_error
+            raise vault_exception(http_error.response.text) from http_error
 
         return response
 
