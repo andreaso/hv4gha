@@ -239,20 +239,20 @@ class VaultTransit:
 
         return key_import
 
-    def sign_jwt(self, *, key_name: str, key_version: int, app_id: str) -> str:
+    def sign_jwt(self, *, key_name: str, key_version: int, app_client_id: str) -> str:
         """
         Sign JWT token to authenticate towards GitHub
 
         :param key_name: Transit Engine key name.
         :param key_version: Transit Engine key version.
-        :param app_id: GitHub App ID.
+        :param app_client_id: GitHub App client ID.
 
 
         :return: GitHub App JWT token
         """
 
         now = datetime.now(timezone.utc)
-        header_and_claims = prepare_gh_app_jwt(app_id, now)
+        header_and_claims = prepare_gh_app_jwt(app_client_id, now)
 
         api_path = f"/v1/{self.transit_backend}/sign/{key_name}"
         payload = {

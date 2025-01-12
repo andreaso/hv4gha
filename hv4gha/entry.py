@@ -50,7 +50,7 @@ def issue_access_token(
     key_name: str,
     vault_addr: str,
     vault_token: str,
-    app_id: int | str,
+    app_client_id: str,
     account: str,
     key_version: int = 0,
     permissions: None | dict[str, str] = None,
@@ -64,7 +64,7 @@ def issue_access_token(
     :param key_name: Name which Vault's Transit Engine knows the App key by.
     :param vault_addr: Vault instance VAULT_ADDR.
     :param vault_token: Vault instance VAULT_TOKEN.
-    :param app_id: GitHub App ID.
+    :param app_client_id: GitHub App client ID.
     :param account: GitHub account to access, where the App is installed.
     :param key_version: Imported key version to use. Defaults to 0, the latest version.
     :param permissions: Optionally scope (down) token permissions.
@@ -76,9 +76,6 @@ def issue_access_token(
         time, permission scope and optionally covered repositories.
     """
 
-    if isinstance(app_id, int):
-        app_id = str(app_id)
-
     transit = VaultTransit(
         vault_addr=vault_addr,
         vault_token=vault_token,
@@ -87,7 +84,7 @@ def issue_access_token(
     jwt: str = transit.sign_jwt(
         key_name=key_name,
         key_version=key_version,
-        app_id=app_id,
+        app_client_id=app_client_id,
     )
 
     ghapp = GitHubApp(

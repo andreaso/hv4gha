@@ -47,7 +47,7 @@ def issue() -> None:
         key_name=os.environ["HV4GHA_KEYNAME"],
         vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
         vault_token=os.environ["HVGHA_VAULT_SIGN_TOKEN"],
-        app_id=os.environ["HV4GHA_APP_ID"],
+        app_client_id=os.environ["HV4GHA_APP_CLIENT_ID"],
         account=os.environ["HV4GHA_ACCOUNT"],
     )
 
@@ -61,7 +61,7 @@ def issue_scoped() -> None:
         key_name=os.environ["HV4GHA_KEYNAME"],
         vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
         vault_token=os.environ["HVGHA_VAULT_SIGN_TOKEN"],
-        app_id=os.environ["HV4GHA_APP_ID"],
+        app_client_id=os.environ["HV4GHA_APP_CLIENT_ID"],
         account=os.environ["HV4GHA_ACCOUNT"],
         permissions=req_perms,
         repositories=[os.environ["HV4GHA_TEST_REPO"]],

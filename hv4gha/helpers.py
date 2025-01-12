@@ -26,11 +26,11 @@ def b64str(data: bytes | str, urlsafe: bool = False) -> str:
     return base64.b64encode(data).decode()
 
 
-def prepare_gh_app_jwt(app_id: str, now: datetime) -> str:
+def prepare_gh_app_jwt(app_client_id: str, now: datetime) -> str:
     """
     Prepares the JWT payload needed to authenticate as a GitHub App
 
-    :param app_id: The GitHub App's ID
+    :param app_client_id: The GitHub App's client ID
     :param now: Current UTC time
 
     :return: The header-and-claims part of a JWT token
@@ -46,7 +46,7 @@ def prepare_gh_app_jwt(app_id: str, now: datetime) -> str:
     claims = {
         "iat": timestamp,
         "exp": expire,
-        "iss": app_id,
+        "iss": app_client_id,
     }
 
     b64_header = b64str(json.dumps(header), urlsafe=True)

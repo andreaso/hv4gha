@@ -51,7 +51,7 @@ response = issue_access_token(
     key_name="my-github-app",
     vault_addr="https://vault.example.com:8200",
     vault_token="...",
-    app_id=368468,
+    app_client_id="Iv1.bc01362e9d72c72a",
     account="andreaso",
 )
 
@@ -68,7 +68,7 @@ response = issue_access_token(
     key_name="my-github-app",
     vault_addr="https://vault.example.com:8200",
     vault_token="...",
-    app_id=368468,
+    app_client_id="Iv1.bc01362e9d72c72a",
     account="andreaso",
     permissions={"contents": "read"},
     repositories=["world-domination"],
