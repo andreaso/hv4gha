@@ -83,32 +83,20 @@ class VaultTransit:
         self.auth_headers: Final[dict[str, str]] = {"X-Vault-Token": vault_token}
         self.transit_backend: Final[str] = transit_backend.strip("/")
 
-    def __download_wrapping_key(self) -> rsa.RSAPublicKey:
-        wrapping_key_url = self.vault_addr + f"/v1/{self.transit_backend}/wrapping_key"
+    def __api_read(
+        self,
+        api_path: str,
+    ) -> requests.models.Response:
+        read_url = self.vault_addr + api_path
 
-        try:
-            response = requests.get(
-                wrapping_key_url,
-                headers=self.auth_headers,
-                timeout=10,
-            )
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as http_error:
-            raise WrappingKeyDownloadError(http_error.response.text) from http_error
+        response = requests.get(
+            read_url,
+            headers=self.auth_headers,
+            timeout=10,
+        )
+        response.raise_for_status()
 
-        try:
-            wrapping_key_bm = WrappingKey(**response.json())
-        except ValidationError as validation_error:
-            error_message = "<Failed to parse Wrapping Key API response>"
-            raise WrappingKeyDownloadError(error_message) from validation_error
-
-        wrapping_pem_key = wrapping_key_bm.data["public_key"].encode()
-        wrapping_key = serialization.load_pem_public_key(wrapping_pem_key)
-
-        if not isinstance(wrapping_key, rsa.RSAPublicKey):
-            raise ValueError("Unexpected wrappingkey format")
-
-        return wrapping_key
+        return response
 
     def __api_write(
         self,
@@ -129,6 +117,28 @@ class VaultTransit:
         response.raise_for_status()
 
         return response
+
+    def __download_wrapping_key(self) -> rsa.RSAPublicKey:
+        api_path = f"/v1/{self.transit_backend}/wrapping_key"
+
+        try:
+            response: requests.models.Response = self.__api_read(api_path)
+        except requests.exceptions.HTTPError as http_error:
+            raise WrappingKeyDownloadError(http_error.response.text) from http_error
+
+        try:
+            wrapping_key_bm = WrappingKey(**response.json())
+        except ValidationError as validation_error:
+            error_message = "<Failed to parse Wrapping Key API response>"
+            raise WrappingKeyDownloadError(error_message) from validation_error
+
+        wrapping_pem_key = wrapping_key_bm.data["public_key"].encode()
+        wrapping_key = serialization.load_pem_public_key(wrapping_pem_key)
+
+        if not isinstance(wrapping_key, rsa.RSAPublicKey):
+            raise ValueError("Unexpected wrappingkey format")
+
+        return wrapping_key
 
     def import_key(self, *, key_name: str, pem_app_key: bytes) -> None:
         """
