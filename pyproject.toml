@@ -1,6 +1,6 @@
 [project]
 name = "hv4gha"
-version = "0.3.0"
+version = "0.4.0"
 description = "Use HashiCorp Vault to manage a GitHub App's private RSA key."
 authors = [{name = "Andreas Olsson", email = "andreas@arrakis.se"}]
 dependencies = [
