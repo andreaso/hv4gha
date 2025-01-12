@@ -1,7 +1,7 @@
 """Top-level functions"""
 
 from .gh import GitHubApp, TokenResponse
-from .vault import VaultTransit
+from .vault import ImportResponse, VaultTransit
 
 
 def import_app_key(
@@ -12,7 +12,7 @@ def import_app_key(
     vault_token: str,
     transit_backend: str = "transit",
     revoke_vault_token: bool = False,
-) -> None:
+) -> ImportResponse:
     """
     Import GitHub App key into Vault's Transit engine
 
@@ -22,6 +22,8 @@ def import_app_key(
     :param vault_token: Vault instance VAULT_TOKEN.
     :param transit_backend: Transit backend mount path. Defaults to "transit".
     :param revoke_vault_token: Revoke `vault_token` once done? Defaults to False.
+
+    :return: Key import info, containing the key version.
     """
 
     if isinstance(pem_key, str):
@@ -32,13 +34,15 @@ def import_app_key(
         vault_token=vault_token,
         transit_backend=transit_backend,
     )
-    transit.import_key(
+    key_import: ImportResponse = transit.import_key(
         key_name=key_name,
         pem_app_key=pem_key,
     )
 
     if revoke_vault_token:
         transit.revoke_token()
+
+    return key_import
 
 
 def issue_access_token(
@@ -48,6 +52,7 @@ def issue_access_token(
     vault_token: str,
     app_id: int | str,
     account: str,
+    key_version: int = 0,
     permissions: None | dict[str, str] = None,
     repositories: None | list[str] = None,
     transit_backend: str = "transit",
@@ -61,6 +66,7 @@ def issue_access_token(
     :param vault_token: Vault instance VAULT_TOKEN.
     :param app_id: GitHub App ID.
     :param account: GitHub account to access, where the App is installed.
+    :param key_version: Imported key version to use. Defaults to 0, the latest version.
     :param permissions: Optionally scope (down) token permissions.
     :param repositories: Optionally limit accessible repositories.
     :param transit_backend: Vault Transit backend mount path. Defaults to "transit".
@@ -80,6 +86,7 @@ def issue_access_token(
     )
     jwt: str = transit.sign_jwt(
         key_name=key_name,
+        key_version=key_version,
         app_id=app_id,
     )
 

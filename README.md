@@ -32,13 +32,14 @@ from hv4gha import import_app_key
 with open("/path/to/github-app.private-key.pem", "r") as akh:
     my_app_key = akh.read()
 
-import_app_key(
+response = import_app_key(
     pem_key=my_app_key,
     key_name="my-github-app",
     vault_addr="https://vault.example.com:8200",
     vault_token="...",
 )
 
+key_version = response["key_version"]
 ```
 
 ### Issue Access Token
@@ -98,7 +99,15 @@ path "transit/wrapping_key" {
   capabilities = ["read"]
 }
 
+path "transit/keys/my-github-app" {
+  capabilities = ["read"]
+}
+
 path "transit/keys/my-github-app/import" {
+  capabilities = ["update"]
+}
+
+path "transit/keys/my-github-app/import_version" {
   capabilities = ["update"]
 }
 ```

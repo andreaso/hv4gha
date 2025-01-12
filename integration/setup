@@ -17,7 +17,15 @@ path "transit/wrapping_key" {
   capabilities = ["read"]
 }
 
+path "transit/keys/+" {
+  capabilities = ["read"]
+}
+
 path "transit/keys/+/import" {
+  capabilities = ["update"]
+}
+
+path "transit/keys/+/import_version" {
   capabilities = ["update"]
 }
 EOF

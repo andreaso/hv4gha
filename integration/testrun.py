@@ -26,6 +26,13 @@ def key_import() -> None:
     """Import App key into Vault"""
 
     import_app_key(
+        pem_key=b64decode(os.environ["HV4GHA_REVOKED_APP_KEY_B64"]),
+        key_name=os.environ["HV4GHA_KEYNAME"],
+        vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
+        vault_token=os.environ["HVGHA_VAULT_IMPORT_TOKEN"],
+    )
+
+    import_app_key(
         pem_key=b64decode(os.environ["HV4GHA_APP_KEY_B64"]),
         key_name=os.environ["HV4GHA_KEYNAME"],
         vault_addr=os.environ["HV4GHA_VAULT_ADDR"],

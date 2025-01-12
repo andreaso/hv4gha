@@ -2,6 +2,7 @@
 
 import base64
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any, Final
 
@@ -30,6 +31,10 @@ class TokenRevokeError(VaultAPIError):
     """Failure to self-revoke the Vault token"""
 
 
+class VersionLookupError(VaultAPIError):
+    """Failure to lookup the version of the imported key version"""
+
+
 class WrappingKeyDownloadError(VaultAPIError):
     """Failure to download the Vault Transit wrapping key"""
 
@@ -40,6 +45,20 @@ class VaultErrors(BaseModel):
     """
 
     errors: list[str]
+
+
+class VersionData(TypedDict):
+    """Part of KeyLookup"""
+
+    latest_version: int
+
+
+class KeyLookup(BaseModel):
+    """
+    https://developer.hashicorp.com/vault/api-docs/secret/transit#read-key
+    """
+
+    data: VersionData
 
 
 class JWTData(TypedDict):
@@ -68,6 +87,12 @@ class WrappingKey(BaseModel):
     """
 
     data: KeyData
+
+
+class ImportResponse(TypedDict):
+    """Typing for key import response"""
+
+    key_version: int
 
 
 class VaultTransit:
@@ -140,7 +165,46 @@ class VaultTransit:
 
         return wrapping_key
 
-    def import_key(self, *, key_name: str, pem_app_key: bytes) -> None:
+    def __lookup_version(self, *, key_name: str) -> int:
+        api_path = f"/v1/{self.transit_backend}/keys/{key_name}"
+
+        try:
+            response: requests.models.Response = self.__api_read(api_path)
+        except requests.exceptions.HTTPError as http_error:
+            raise VersionLookupError(http_error.response.text) from http_error
+
+        try:
+            key_lookup_bm = KeyLookup(**response.json())
+        except ValidationError as validation_error:
+            error_message = "<Failed to parse key lookup API response>"
+            raise VersionLookupError(error_message) from validation_error
+
+        return key_lookup_bm.data["latest_version"]
+
+    @staticmethod
+    def __check_import_version_error(http_error: requests.exceptions.HTTPError) -> bool:
+        try:
+            errors_bm = VaultErrors(**http_error.response.json())
+        except ValidationError:
+            return False
+        return "use import-version" in errors_bm.errors[0]
+
+    def __import_version(self, *, key_name: str, wrapped_b64: str) -> int:
+        api_path = f"/v1/{self.transit_backend}/keys/{key_name}/import_version"
+        payload = {
+            "ciphertext": wrapped_b64,
+            "hash_function": "SHA256",
+        }
+
+        try:
+            self.__api_write(api_path, payload)
+        except requests.exceptions.HTTPError as http_error:
+            raise AppKeyImportError(http_error.response.text) from http_error
+
+        key_version: int = self.__lookup_version(key_name=key_name)
+        return key_version
+
+    def import_key(self, *, key_name: str, pem_app_key: bytes) -> ImportResponse:
         """
         Import GitHub App key
 
@@ -160,16 +224,27 @@ class VaultTransit:
             "allow_plaintext_backup": False,
         }
 
+        key_import: ImportResponse = {"key_version": 1}
         try:
             self.__api_write(api_path, payload)
+            return key_import
         except requests.exceptions.HTTPError as http_error:
-            raise AppKeyImportError(http_error.response.text) from http_error
+            if not self.__check_import_version_error(http_error):
+                raise AppKeyImportError(http_error.response.text) from http_error
 
-    def sign_jwt(self, *, key_name: str, app_id: str) -> str:
+            key_version: int = self.__import_version(
+                key_name=key_name, wrapped_b64=wrapped_b64
+            )
+            key_import["key_version"] = key_version
+
+        return key_import
+
+    def sign_jwt(self, *, key_name: str, key_version: int, app_id: str) -> str:
         """
         Sign JWT token to authenticate towards GitHub
 
         :param key_name: Transit Engine key name.
+        :param key_version: Transit Engine key version.
         :param app_id: GitHub App ID.
 
 
@@ -184,6 +259,7 @@ class VaultTransit:
             "input": b64str(header_and_claims),
             "hash_algorithm": "sha2-256",
             "signature_algorithm": "pkcs1v15",
+            "key_version": key_version,
         }
 
         try:
@@ -197,7 +273,7 @@ class VaultTransit:
             error_message = "<Failed to parse Sign JWT API response>"
             raise JWTSigningError(error_message) from validation_error
 
-        signature = signature_bm.data["signature"].removeprefix("vault:v1:")
+        signature = re.sub(r"^vault:v[0-9]+:", "", signature_bm.data["signature"])
         signature = b64str(base64.b64decode(signature), urlsafe=True)
 
         jwt_token = header_and_claims + "." + signature
