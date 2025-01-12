@@ -4,7 +4,7 @@ version = "0.3.0"
 description = "Use HashiCorp Vault to manage a GitHub App's private RSA key."
 authors = [{name = "Andreas Olsson", email = "andreas@arrakis.se"}]
 dependencies = [
-  "certifi (>=2024.7.4)",
+  "certifi (>=2024.12.14)",
   "cryptography (>=43.0.1)",
   "requests (>=2.31.0,<3)",
   "pydantic (>=2.8.0,<3)",
