@@ -5,12 +5,11 @@ set -o noglob
 set -o pipefail
 
 # Required env variables
-: "$VAULT_ADDR"
-: "$VAULT_TOKEN"
+: "$HVGHA_SETUP_COMMAND"
 : "$HVGHA_VAULT_IMPORT_TOKEN"
 : "$HVGHA_VAULT_SIGN_TOKEN"
 
-vault secrets enable transit
+"$HVGHA_SETUP_COMMAND" secrets enable transit
 
 cat <<EOF |
 path "transit/wrapping_key" {
@@ -29,14 +28,14 @@ path "transit/keys/+/import_version" {
   capabilities = ["update"]
 }
 EOF
-vault policy write import-key -
+"$HVGHA_SETUP_COMMAND" policy write import-key -
 
 cat <<EOF |
 path "transit/sign/+" {
   capabilities = ["update"]
 }
 EOF
-vault policy write sign-token -
+"$HVGHA_SETUP_COMMAND" policy write sign-token -
 
-vault token create -no-default-policy -policy=import-key -id="$HVGHA_VAULT_IMPORT_TOKEN" -field=token
-vault token create -no-default-policy -policy=sign-token -id="$HVGHA_VAULT_SIGN_TOKEN" -field=token
+"$HVGHA_SETUP_COMMAND" token create -no-default-policy -policy=import-key -id="$HVGHA_VAULT_IMPORT_TOKEN" -field=token
+"$HVGHA_SETUP_COMMAND" token create -no-default-policy -policy=sign-token -id="$HVGHA_VAULT_SIGN_TOKEN" -field=token

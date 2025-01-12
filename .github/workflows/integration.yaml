@@ -107,3 +107,18 @@ jobs:
 
       - name: Issue scoped Access Token (Python 3.13) (unconstrained)
         run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py313-unconstrained issue-scoped
+
+      - name: Bring up OpenBao server
+        run: docker compose -f integration/docker-compose.yaml up --wait --detach bao-server
+
+      - name: Configure OpenBao server
+        run: docker compose -f integration/docker-compose.yaml run --no-deps bao-setup
+
+      - name: Import App key (OpenBao) (Python 3.13) (unconstrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-bao-py313-unconstrained import
+
+      - name: Issue Access Token (OpenBao) (Python 3.13) (unconstrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-bao-py313-unconstrained issue
+
+      - name: Issue scoped Access Token (OpenBao) (Python 3.13) (unconstrained)
+        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-bao-py313-unconstrained issue-scoped

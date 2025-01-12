@@ -13,6 +13,8 @@ Conceptually Vault here fills the role of an HSM or a Cloud KMS.
 
 See [Authenticating as a GitHub App installation (GitHub Docs)][3] for context.
 
+The library is also tested against [OpenBao][6].
+
 ## Installation
 
 ```shell
@@ -131,3 +133,4 @@ library and its [Auth Methods][5] documentation.
 [3]: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
 [4]: https://github.com/hvac/hvac
 [5]: https://hvac.readthedocs.io/en/stable/usage/auth_methods/
+[6]: https://openbao.org/
