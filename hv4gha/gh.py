@@ -119,7 +119,7 @@ class GitHubApp:
 
     def __init__(self, *, account: str, jwt_token: str):
         """
-        :param app_id: GitHub App ID.
+        :param account: GitHub account to access
         :param jwt_token: GitHub App JWT token
         """
 
