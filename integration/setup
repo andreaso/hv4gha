@@ -16,22 +16,22 @@ path "transit/wrapping_key" {
   capabilities = ["read"]
 }
 
-path "transit/keys/+" {
+path "transit/keys/testrunner" {
   capabilities = ["read"]
 }
 
-path "transit/keys/+/import" {
+path "transit/keys/testrunner/import" {
   capabilities = ["update"]
 }
 
-path "transit/keys/+/import_version" {
+path "transit/keys/testrunner/import_version" {
   capabilities = ["update"]
 }
 EOF
 "$HVGHA_SETUP_COMMAND" policy write import-key -
 
 cat <<EOF |
-path "transit/sign/+" {
+path "transit/sign/testrunner" {
   capabilities = ["update"]
 }
 EOF

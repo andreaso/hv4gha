@@ -18,6 +18,19 @@ jobs:
     name: Integration testing
     runs-on: ubuntu-24.04
 
+    strategy:
+      matrix:
+        backend: ["vault"]
+        py_version: ["3.10", "3.11", "3.12", "3.13"]
+        dependencies: ["constrained", "unconstrained"]
+        include:
+          - backend: bao
+            py_version: 3.12
+            dependencies: unconstrained
+
+    env:
+      BACKEND: ${{ matrix.backend }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,98 +40,23 @@ jobs:
         env:
           TEST_APP_KEY_B64: ${{ secrets.TEST_APP_KEY_B64 }}
 
-      - name: Build test images
-        run: docker compose -f integration/docker-compose.yaml build
+      - name: Build test image
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" build --build-arg pyver="${py_version}" --build-arg pip_extra="${pip_extra}" testrunner
+        env:
+          pip_extra: ${{ matrix.dependencies == 'constrained' && '--constraint=/src/constraints.txt' || '' }}
+          py_version: ${{ matrix.py_version }}
 
-      - name: Bring up Vault server
-        run: docker compose -f integration/docker-compose.yaml up --wait --detach vault-server
+      - name: Bring up server
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" up --wait --detach "${BACKEND}-server"
 
-      - name: Enable Vault's Transit Engine
-        run: docker compose -f integration/docker-compose.yaml run --no-deps vault-setup
+      - name: Configure server
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" run --no-deps "${BACKEND}-setup"
 
-      - name: Import App key (Python 3.10) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310-constrained import
+      - name: Import App key
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" run --no-deps testrunner import
 
-      - name: Issue Access Token (Python 3.10) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310-constrained issue
+      - name: Issue Access Token
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" run --no-deps testrunner issue
 
-      - name: Issue scoped Access Token (Python 3.10) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310-constrained issue-scoped
-
-      - name: Import App key (Python 3.10) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310-unconstrained import
-
-      - name: Issue Access Token (Python 3.10) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310-unconstrained issue
-
-      - name: Issue scoped Access Token (Python 3.10) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py310-unconstrained issue-scoped
-
-      - name: Import App key (Python 3.11) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311-constrained import
-
-      - name: Issue Access Token (Python 3.11) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311-constrained issue
-
-      - name: Issue scoped Access Token (Python 3.11) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311-constrained issue-scoped
-
-      - name: Import App key (Python 3.11) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311-unconstrained import
-
-      - name: Issue Access Token (Python 3.11) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311-unconstrained issue
-
-      - name: Issue scoped Access Token (Python 3.11) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py311-unconstrained issue-scoped
-
-      - name: Import App key (Python 3.12) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-constrained import
-
-      - name: Issue Access Token (Python 3.12) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-constrained issue
-
-      - name: Issue scoped Access Token (Python 3.12) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-constrained issue-scoped
-
-      - name: Import App key (Python 3.12) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-unconstrained import
-
-      - name: Issue Access Token (Python 3.12) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-unconstrained issue
-
-      - name: Issue scoped Access Token (Python 3.12) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py312-unconstrained issue-scoped
-
-      - name: Import App key (Python 3.13) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py313-constrained import
-
-      - name: Issue Access Token (Python 3.13) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py313-constrained issue
-
-      - name: Issue scoped Access Token (Python 3.13) (constrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py313-constrained issue-scoped
-
-      - name: Import App key (Python 3.13) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py313-unconstrained import
-
-      - name: Issue Access Token (Python 3.13) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py313-unconstrained issue
-
-      - name: Issue scoped Access Token (Python 3.13) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-py313-unconstrained issue-scoped
-
-      - name: Bring up OpenBao server
-        run: docker compose -f integration/docker-compose.yaml up --wait --detach bao-server
-
-      - name: Configure OpenBao server
-        run: docker compose -f integration/docker-compose.yaml run --no-deps bao-setup
-
-      - name: Import App key (OpenBao) (Python 3.13) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-bao-py313-unconstrained import
-
-      - name: Issue Access Token (OpenBao) (Python 3.13) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-bao-py313-unconstrained issue
-
-      - name: Issue scoped Access Token (OpenBao) (Python 3.13) (unconstrained)
-        run: docker compose -f integration/docker-compose.yaml run --no-deps testrun-bao-py313-unconstrained issue-scoped
+      - name: Issue scoped Access Token
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" run --no-deps testrunner issue-scoped

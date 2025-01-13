@@ -1,0 +1,49 @@
+---
+
+services:
+  testrunner:
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    read_only: true
+    user: 3000:3000
+    build:
+      context: ..
+      dockerfile: integration/Dockerfile
+    environment:
+      HV4GHA_KEYNAME: testrunner
+      HV4GHA_VAULT_ADDR: http://bao-server:8200
+      HVGHA_VAULT_IMPORT_TOKEN: OpenBaoHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: OpenBaoHorseSignJWT
+    env_file: .env
+    command: [import, issue, issue-scoped]
+    depends_on:
+      - bao-setup
+
+  bao-setup:
+    image: openbao/openbao:latest
+    environment:
+      HVGHA_SETUP_COMMAND: bao
+      HVGHA_VAULT_IMPORT_TOKEN: OpenBaoHorseImportKey
+      HVGHA_VAULT_SIGN_TOKEN: OpenBaoHorseSignJWT
+      BAO_TOKEN: BatteryStaple
+      BAO_ADDR: http://bao-server:8200
+    volumes:
+      - ./setup:/mnt/setup
+    entrypoint: /mnt/setup
+    depends_on:
+      bao-server:
+        condition: service_healthy
+
+  bao-server:
+    cap_add:
+      - IPC_LOCK
+    image: openbao/openbao:latest
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: BatteryStaple
+    healthcheck:
+      test: ["CMD", "/usr/bin/nc", "-z", "127.0.0.1", "8200"]
+      interval: 1s
+      timeout: 1s
+      retries: 5
