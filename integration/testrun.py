@@ -76,6 +76,17 @@ def issue_scoped() -> None:
     _check_repos([os.environ["HV4GHA_TEST_REPO"]], access_token["repositories"])
 
 
+def key_versioning() -> None:
+    for i in range(4):
+        key_name = "HV4GHA_APP_KEY_B64" if i % 2 else "HV4GHA_REVOKED_APP_KEY_B64"
+        import_app_key(
+            pem_key=b64decode(os.environ[key_name]),
+            key_name=os.environ["HV4GHA_KEYNAME2"],
+            vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
+            vault_token=os.environ["HVGHA_VAULT_IMPORT_TOKEN"],
+        )
+
+
 def main() -> None:
     """Parse args, run tests"""
 
@@ -91,6 +102,8 @@ def main() -> None:
             issue()
         elif arg == "issue-scoped":
             issue_scoped()
+        elif arg == "key-versioning":
+            key_versioning()
         else:
             print(f"Unknown test command: {arg}", file=sys.stderr)
             sys.exit(1)

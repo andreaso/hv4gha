@@ -9,33 +9,42 @@ set -o pipefail
 : "$HVGHA_VAULT_IMPORT_TOKEN"
 : "$HVGHA_VAULT_SIGN_TOKEN"
 
+import_policy=$(mktemp)
+signing_policy=$(mktemp)
+trap 'rm -rf "$import_policy" "$signing_policy"' EXIT
+
 "$HVGHA_SETUP_COMMAND" secrets enable transit
 
-cat <<EOF |
+cat <<EOF > "$import_policy"
 path "transit/wrapping_key" {
   capabilities = ["read"]
 }
+EOF
 
-path "transit/keys/testrunner" {
+for keyname in testrunner testrunner-key2; do
+cat <<EOF >> "$import_policy"
+path "transit/keys/${keyname}" {
   capabilities = ["read"]
 }
 
-path "transit/keys/testrunner/import" {
+path "transit/keys/${keyname}/import" {
   capabilities = ["update"]
 }
 
-path "transit/keys/testrunner/import_version" {
+path "transit/keys/${keyname}/import_version" {
   capabilities = ["update"]
 }
 EOF
-"$HVGHA_SETUP_COMMAND" policy write import-key -
 
-cat <<EOF |
-path "transit/sign/testrunner" {
+cat <<EOF >> "$signing_policy"
+path "transit/sign/${keyname}" {
   capabilities = ["update"]
 }
 EOF
-"$HVGHA_SETUP_COMMAND" policy write sign-token -
+done
+
+"$HVGHA_SETUP_COMMAND" policy write import-key "$import_policy"
+"$HVGHA_SETUP_COMMAND" policy write sign-token "$signing_policy"
 
 "$HVGHA_SETUP_COMMAND" token create -no-default-policy -policy=import-key -id="$HVGHA_VAULT_IMPORT_TOKEN" -field=token
 "$HVGHA_SETUP_COMMAND" token create -no-default-policy -policy=sign-token -id="$HVGHA_VAULT_SIGN_TOKEN" -field=token
