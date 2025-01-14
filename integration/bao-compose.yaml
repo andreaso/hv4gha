@@ -13,6 +13,7 @@ services:
       dockerfile: integration/Dockerfile
     environment:
       HV4GHA_KEYNAME: testrunner
+      HV4GHA_KEYNAME2: testrunner-key2
       HV4GHA_VAULT_ADDR: http://bao-server:8200
       HVGHA_VAULT_IMPORT_TOKEN: OpenBaoHorseImportKey
       HVGHA_VAULT_SIGN_TOKEN: OpenBaoHorseSignJWT
