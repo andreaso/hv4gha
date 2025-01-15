@@ -60,3 +60,6 @@ jobs:
 
       - name: Issue scoped Access Token
         run: docker compose -f "integration/${BACKEND}-compose.yaml" run --no-deps testrunner issue-scoped
+
+      - name: Test different key versions
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" run --no-deps testrunner key-versioning

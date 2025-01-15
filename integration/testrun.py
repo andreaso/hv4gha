@@ -6,8 +6,12 @@ import sys
 from base64 import b64decode
 
 from hv4gha import TokenResponse, import_app_key, issue_access_token
-from hv4gha.gh import TokenPermissions
+from hv4gha.gh import InstallationLookupError, TokenPermissions
 from hv4gha.vault import ImportResponse
+
+
+class TestError(Exception):
+    """Communicate test failure"""
 
 
 def _import_key(app_key_env: str, key_name_env: str) -> ImportResponse:
@@ -76,6 +80,34 @@ def issue_scoped() -> None:
     _check_repos([os.environ["HV4GHA_TEST_REPO"]], access_token["repositories"])
 
 
+def key_versioning() -> None:
+    bad_ok = "Key version shouldn't have been allowed to issue Access Token"
+
+    keyimp1 = _import_key("HV4GHA_APP_KEY_B64", "HV4GHA_KEYNAME2")
+    keyimp2 = _import_key("HV4GHA_REVOKED_APP_KEY_B64", "HV4GHA_KEYNAME2")
+    keyimp3 = _import_key("HV4GHA_APP_KEY_B64", "HV4GHA_KEYNAME2")
+    keyimp4 = _import_key("HV4GHA_REVOKED_APP_KEY_B64", "HV4GHA_KEYNAME2")
+
+    assert keyimp1["key_version"] == 1
+    assert keyimp2["key_version"] == 2
+    assert keyimp3["key_version"] == 3
+    assert keyimp4["key_version"] == 4
+
+    _issue_std_token("HV4GHA_KEYNAME2", key_version=1)
+    _issue_std_token("HV4GHA_KEYNAME2", key_version=3)
+
+    try:
+        _issue_std_token("HV4GHA_KEYNAME2", key_version=2)
+        raise TestError(bad_ok)
+    except InstallationLookupError:
+        pass
+    try:
+        _issue_std_token("HV4GHA_KEYNAME2")
+        raise TestError(bad_ok)
+    except InstallationLookupError:
+        pass
+
+
 def main() -> None:
     """Parse args, run tests"""
 
@@ -91,6 +123,8 @@ def main() -> None:
             issue()
         elif arg == "issue-scoped":
             issue_scoped()
+        elif arg == "key-versioning":
+            key_versioning()
         else:
             print(f"Unknown test command: {arg}", file=sys.stderr)
             sys.exit(1)
