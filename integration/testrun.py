@@ -6,7 +6,7 @@ import sys
 from base64 import b64decode
 
 from hv4gha import TokenResponse, import_app_key, issue_access_token
-from hv4gha.gh import TokenPermissions
+from hv4gha.gh import InstallationLookupError, TokenPermissions
 from hv4gha.vault import ImportResponse
 
 
@@ -77,14 +77,23 @@ def issue_scoped() -> None:
 
 
 def key_versioning() -> None:
-    for i in range(4):
-        key_name = "HV4GHA_APP_KEY_B64" if i % 2 else "HV4GHA_REVOKED_APP_KEY_B64"
-        import_app_key(
-            pem_key=b64decode(os.environ[key_name]),
-            key_name=os.environ["HV4GHA_KEYNAME2"],
-            vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
-            vault_token=os.environ["HVGHA_VAULT_IMPORT_TOKEN"],
-        )
+    keyimp1 = _import_key("HV4GHA_APP_KEY_B64", "HV4GHA_KEYNAME2")
+    keyimp2 = _import_key("HV4GHA_REVOKED_APP_KEY_B64", "HV4GHA_KEYNAME2")
+    keyimp3 = _import_key("HV4GHA_APP_KEY_B64", "HV4GHA_KEYNAME2")
+    keyimp4 = _import_key("HV4GHA_REVOKED_APP_KEY_B64", "HV4GHA_KEYNAME2")
+
+    assert keyimp1["key_version"] == 1
+    assert keyimp2["key_version"] == 2
+    assert keyimp3["key_version"] == 3
+    assert keyimp4["key_version"] == 4
+
+    _issue_std_token("HV4GHA_KEYNAME2", 1)
+
+    try:
+        _issue_std_token("HV4GHA_KEYNAME2", 1)
+        raise AssertionError("This key version should not have succeeded")
+    except InstallationLookupError:
+        pass
 
 
 def main() -> None:
