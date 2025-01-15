@@ -7,6 +7,28 @@ from base64 import b64decode
 
 from hv4gha import TokenResponse, import_app_key, issue_access_token
 from hv4gha.gh import TokenPermissions
+from hv4gha.vault import ImportResponse
+
+
+def _import_key(app_key_env: str, key_name_env: str) -> ImportResponse:
+    response = import_app_key(
+        pem_key=b64decode(os.environ[app_key_env]),
+        key_name=os.environ[key_name_env],
+        vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
+        vault_token=os.environ["HVGHA_VAULT_IMPORT_TOKEN"],
+    )
+    return response
+
+
+def _issue_std_token(key_name_env: str, key_version: int = 0) -> None:
+    issue_access_token(
+        key_name=os.environ[key_name_env],
+        vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
+        vault_token=os.environ["HVGHA_VAULT_SIGN_TOKEN"],
+        app_client_id=os.environ["HV4GHA_APP_CLIENT_ID"],
+        account=os.environ["HV4GHA_ACCOUNT"],
+        key_version=key_version,
+    )
 
 
 def _check_perms(requested: dict[str, str], result: TokenPermissions) -> None:
@@ -25,31 +47,14 @@ def _check_repos(requested: list[str], result: list[str]) -> None:
 def key_import() -> None:
     """Import App key into Vault"""
 
-    import_app_key(
-        pem_key=b64decode(os.environ["HV4GHA_REVOKED_APP_KEY_B64"]),
-        key_name=os.environ["HV4GHA_KEYNAME"],
-        vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
-        vault_token=os.environ["HVGHA_VAULT_IMPORT_TOKEN"],
-    )
-
-    import_app_key(
-        pem_key=b64decode(os.environ["HV4GHA_APP_KEY_B64"]),
-        key_name=os.environ["HV4GHA_KEYNAME"],
-        vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
-        vault_token=os.environ["HVGHA_VAULT_IMPORT_TOKEN"],
-    )
+    _import_key("HV4GHA_REVOKED_APP_KEY_B64", "HV4GHA_KEYNAME")
+    _import_key("HV4GHA_APP_KEY_B64", "HV4GHA_KEYNAME")
 
 
 def issue() -> None:
     """Issue an access token"""
 
-    issue_access_token(
-        key_name=os.environ["HV4GHA_KEYNAME"],
-        vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
-        vault_token=os.environ["HVGHA_VAULT_SIGN_TOKEN"],
-        app_client_id=os.environ["HV4GHA_APP_CLIENT_ID"],
-        account=os.environ["HV4GHA_ACCOUNT"],
-    )
+    _issue_std_token("HV4GHA_KEYNAME")
 
 
 def issue_scoped() -> None:
