@@ -1,0 +1,22 @@
+---
+
+name: ARM arch lookup
+
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  lookup:
+    name: Lookup job
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Dump runner context
+        run: echo "$runner_context"
+        env:
+          runner_context: ${{ toJson(runner) }}
