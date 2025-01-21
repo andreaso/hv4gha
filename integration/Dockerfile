@@ -1,5 +1,3 @@
-# hadolint global ignore=DL3013
-
 ARG pyver=3.11
 FROM python:${pyver}-slim-bookworm AS python-prepare
 
