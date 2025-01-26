@@ -1,6 +1,5 @@
 """GitHub specific code"""
 
-import json
 from datetime import datetime
 from typing import Annotated, Final, Literal
 
@@ -12,6 +11,8 @@ PermARW = Literal["admin", "read", "write"]
 PermRW = Literal["read", "write"]
 PermR = Literal["read"]
 PermW = Literal["write"]
+
+RepoName = Annotated[str, Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")]
 
 
 class GitHubAPIError(Exception):
@@ -48,7 +49,7 @@ class Installation(BaseModel):
 
 
 class TokenPermissions(TypedDict, total=False):
-    """Part of AccessToken"""
+    """Part of AccessToken and AccessTokenRequest"""
 
     # Repository permissions
     actions: PermRW
@@ -91,7 +92,7 @@ class TokenPermissions(TypedDict, total=False):
 class Repository(TypedDict):
     """Part of AccessToken"""
 
-    name: Annotated[str, Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")]
+    name: RepoName
 
 
 class AccessToken(BaseModel):
@@ -103,6 +104,15 @@ class AccessToken(BaseModel):
     expires_at: datetime
     permissions: TokenPermissions
     repositories: None | list[Repository] = None
+
+
+class AccessTokenRequest(BaseModel, validate_assignment=True, extra="forbid"):
+    """
+    https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app
+    """
+
+    permissions: None | TokenPermissions = None
+    repositories: None | list[RepoName] = None
 
 
 class TokenResponse(TypedDict):
@@ -173,8 +183,8 @@ class GitHubApp:
     def issue_token(
         self,
         *,
-        permissions: None | dict[str, str] = None,
-        repositories: None | list[str] = None,
+        permissions: None | TokenPermissions = None,
+        repositories: None | list[RepoName] = None,
     ) -> TokenResponse:
         """
         Issue GitHub Access Token
@@ -186,11 +196,17 @@ class GitHubApp:
             time, permission scope and optionally covered repositories.
         """
 
-        params: dict[str, dict[str, str] | list[str]] = {}
+        params_bm = AccessTokenRequest()
         if permissions:
-            params.update({"permissions": permissions})
+            try:
+                params_bm.permissions = permissions
+            except ValidationError as validation_error:
+                raise ValueError("Invalid GitHub permission(s)") from validation_error
         if repositories:
-            params.update({"repositories": repositories})
+            try:
+                params_bm.repositories = repositories
+            except ValidationError as validation_error:
+                raise ValueError("Invalid repository name(s)") from validation_error
 
         installation_id: str = self.__find_installation()
         issue_url = "/".join(
@@ -205,7 +221,7 @@ class GitHubApp:
             response = requests.post(
                 issue_url,
                 headers=self.auth_headers,
-                data=json.dumps(params),
+                data=params_bm.model_dump_json(exclude_unset=True),
                 timeout=10,
             )
             response.raise_for_status()

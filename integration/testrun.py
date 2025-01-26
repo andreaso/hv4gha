@@ -35,7 +35,7 @@ def _issue_std_token(key_name_env: str, key_version: int = 0) -> None:
     )
 
 
-def _check_perms(requested: dict[str, str], result: TokenPermissions) -> None:
+def _check_perms(requested: TokenPermissions, result: TokenPermissions) -> None:
     result.pop("metadata")  # Clear default permission
     complaint = "Returned permissions does not match requested permissions"
     assert requested == result, complaint
@@ -64,7 +64,7 @@ def issue() -> None:
 def issue_scoped() -> None:
     """Issue a scoped access token, and verify its properties"""
 
-    req_perms = {"statuses": "read"}
+    req_perms: TokenPermissions = {"statuses": "read"}
 
     access_token: TokenResponse = issue_access_token(
         key_name=os.environ["HV4GHA_KEYNAME"],

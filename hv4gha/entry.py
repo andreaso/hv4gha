@@ -1,6 +1,6 @@
 """Top-level functions"""
 
-from .gh import GitHubApp, TokenResponse
+from .gh import GitHubApp, RepoName, TokenPermissions, TokenResponse
 from .vault import ImportResponse, VaultTransit
 
 
@@ -53,8 +53,8 @@ def issue_access_token(
     app_client_id: str,
     account: str,
     key_version: int = 0,
-    permissions: None | dict[str, str] = None,
-    repositories: None | list[str] = None,
+    permissions: None | TokenPermissions = None,
+    repositories: None | list[RepoName] = None,
     transit_backend: str = "transit",
     revoke_vault_token: bool = False,
 ) -> TokenResponse:
