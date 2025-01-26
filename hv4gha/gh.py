@@ -49,7 +49,7 @@ class Installation(BaseModel):
 
 
 class TokenPermissions(TypedDict, total=False):
-    """Part of AccessToken and AccessTokenRequest"""
+    """Part of AccessTokenResponse and AccessTokenRequest"""
 
     # Repository permissions
     actions: PermRW
@@ -90,12 +90,12 @@ class TokenPermissions(TypedDict, total=False):
 
 
 class Repository(TypedDict):
-    """Part of AccessToken"""
+    """Part of AccessTokenResponse"""
 
     name: RepoName
 
 
-class AccessToken(BaseModel):
+class AccessTokenResponse(BaseModel):
     """
     https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app
     """
@@ -229,7 +229,7 @@ class GitHubApp:
             raise TokenIssueError(http_error.response.text) from http_error
 
         try:
-            access_token_bm = AccessToken(**response.json())
+            access_token_bm = AccessTokenResponse(**response.json())
         except ValidationError as validation_error:
             error_message = "<Failed to parse Token Issue API response>"
             raise TokenIssueError(error_message) from validation_error
