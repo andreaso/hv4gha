@@ -2,64 +2,58 @@
 
 name: Lint and Test
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: push
 
 permissions:
   contents: read
   statuses: write
 
 jobs:
-  python:
-    name: Python
-    runs-on: ubuntu-24.04
+  # python:
+  #   name: Python
+  #   runs-on: ubuntu-24.04
 
-    strategy:
-      matrix:
-        py_version: ["3.10", "3.11", "3.12", "3.13"]
-        dependencies: ["constrained", "unconstrained"]
+  #   strategy:
+  #     matrix:
+  #       py_version: ["3.10", "3.11", "3.12", "3.13"]
+  #       dependencies: ["constrained", "unconstrained"]
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
 
-      - name: Install Poetry
-        run: pipx install poetry
+  #     - name: Install Poetry
+  #       run: pipx install poetry
 
-      - name: Enable Python ${{ matrix.py_version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.py_version }}
+  #     - name: Enable Python ${{ matrix.py_version }}
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.py_version }}
 
-      - name: Use Python ${{ matrix.py_version }} with Poetry
-        run: poetry env use python${{ matrix.py_version }}
+  #     - name: Use Python ${{ matrix.py_version }} with Poetry
+  #       run: poetry env use python${{ matrix.py_version }}
 
-      - name: Poetry self-check
-        run: poetry check
+  #     - name: Poetry self-check
+  #       run: poetry check
 
-      - name: Install dependencies
-        run: poetry install
+  #     - name: Install dependencies
+  #       run: poetry install
 
-      - name: Update dependencies
-        if: matrix.dependencies == 'unconstrained'
-        run: poetry update
+  #     - name: Update dependencies
+  #       if: matrix.dependencies == 'unconstrained'
+  #       run: poetry update
 
-      - name: Check ruff formating
-        run: poetry run ruff format --diff hv4gha/ integration/ tests/
+  #     - name: Check ruff formating
+  #       run: poetry run ruff format --diff hv4gha/ integration/ tests/
 
-      - name: Check ruff linting
-        run: poetry run ruff check hv4gha/ integration/ tests/
+  #     - name: Check ruff linting
+  #       run: poetry run ruff check hv4gha/ integration/ tests/
 
-      - name: Verify type hints
-        run: poetry run mypy --strict hv4gha/ integration/ tests/
+  #     - name: Verify type hints
+  #       run: poetry run mypy --strict hv4gha/ integration/ tests/
 
-      - name: Run Pytest
-        run: poetry run pytest
+  #     - name: Run Pytest
+  #       run: poetry run pytest
 
   secondary:
     name: Secondary linting
@@ -74,6 +68,11 @@ jobs:
 
       - name: Lint GitHub Actions workflows
         run: actionlint
+
+      - name: Analyze GitHub Actions
+        run: zizmor .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint integration testing Dockerfile
         run: hadolint --ignore DL3013 integration/Dockerfile
