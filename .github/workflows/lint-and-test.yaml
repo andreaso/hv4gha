@@ -73,7 +73,7 @@ jobs:
         run: actionlint
 
       - name: Analyze GitHub Actions
-        run: zizmor --format=github .
+        run: zizmor --persona=pedantic --format=github .
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
