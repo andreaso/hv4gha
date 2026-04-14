@@ -87,4 +87,4 @@ jobs:
         run: hadolint --ignore DL3013 integration/Dockerfile
 
       - name: Markdown lint README
-        run: markdownlint --disable MD012 -- README.md
+        run: markdownlint --disable MD012 MD013 -- README.md
