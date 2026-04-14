@@ -26,10 +26,10 @@ classifiers = [
 repository = "https://github.com/andreaso/hv4gha"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.18.2"
+mypy = "^1.20.1"
 types-requests = "^2.31.0.20240406"
-pytest = "^8.4.2"
-ruff = "^0.14.0"
+pytest = "^9.0.3"
+ruff = "^0.15.10"
 
 [tool.ruff]
 target-version = "py310"
