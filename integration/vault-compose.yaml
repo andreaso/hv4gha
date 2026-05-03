@@ -23,7 +23,7 @@ services:
       - vault-setup
 
   vault-setup:
-    image: hashicorp/vault
+    image: hashicorp/vault:latest
     environment:
       HVGHA_SETUP_COMMAND: vault
       HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
@@ -40,7 +40,7 @@ services:
   vault-server:
     cap_add:
       - IPC_LOCK
-    image: hashicorp/vault
+    image: hashicorp/vault:latest
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: BatteryStaple
     healthcheck:
