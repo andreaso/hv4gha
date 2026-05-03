@@ -42,6 +42,7 @@ services:
       - IPC_LOCK
     image: hashicorp/vault:latest
     environment:
+      SKIP_SETCAP: "true"
       VAULT_DEV_ROOT_TOKEN_ID: BatteryStaple
     healthcheck:
       test: ["CMD", "/usr/bin/nc", "-z", "127.0.0.1", "8200"]
