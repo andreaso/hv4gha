@@ -15,6 +15,10 @@ PermW = Literal["write"]
 RepoName = Annotated[str, Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")]
 
 
+class ArgumentError(ValueError):
+    """Used to raise specific argument errors"""
+
+
 class GitHubAPIError(Exception):
     """Any error response from the GitHub API"""
 
@@ -127,20 +131,34 @@ class TokenResponse(TypedDict):
 class GitHubApp:
     """GitHub App Access Tokens, etc"""
 
-    def __init__(self, *, account: str, jwt_token: str):
+    def __init__(
+        self,
+        *,
+        account: None | str,
+        installation_id: None | str,
+        jwt_token: str,
+    ):
         """
-        :param account: GitHub account to access
+        :param account: GitHub account to access. It or installation_id is required.
+        :param installation_id: App Installation ID for the GitHub account to access.
         :param jwt_token: GitHub App JWT token
         """
 
-        self.account: Final[str] = account
         self.auth_headers: Final[dict[str, str]] = {
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {jwt_token}",
             "X-GitHub-Api-Version": "2022-11-28",
         }
 
-    def __find_installation(self) -> str:
+        self.installation_id: str
+        if installation_id:
+            self.installation_id = installation_id
+        elif account:
+            self.installation_id = self.__find_installation(account)
+        else:
+            raise ArgumentError("Specify either account or installation_id")
+
+    def __find_installation(self, account: str) -> str:
         lookup_url = "https://api.github.com/app/installations"
 
         pagination_params = {
@@ -170,14 +188,14 @@ class GitHubApp:
                 raise InstallationLookupError(error_message) from validation_error
 
             for installation in installations:
-                if installation.account["login"].lower() == self.account.lower():
+                if installation.account["login"].lower() == account.lower():
                     return str(installation.id)
 
             if "next" in response.links:
                 pagination_params["page"] += 1
                 more = True
 
-        failure = f'App appear not to be installed in the "{self.account}" account'
+        failure = f'App appear not to be installed in the "{account}" account'
         raise NotInstalledError(failure)
 
     def issue_token(
@@ -208,11 +226,10 @@ class GitHubApp:
             except ValidationError as validation_error:
                 raise ValueError("Invalid repository name(s)") from validation_error
 
-        installation_id: str = self.__find_installation()
         issue_url = "/".join(
             [
                 "https://api.github.com/app/installations",
-                installation_id,
+                self.installation_id,
                 "access_tokens",
             ]
         )

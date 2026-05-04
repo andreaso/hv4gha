@@ -1,6 +1,6 @@
 """Top-level functions"""
 
-from .gh import GitHubApp, RepoName, TokenPermissions, TokenResponse
+from .gh import ArgumentError, GitHubApp, RepoName, TokenPermissions, TokenResponse
 from .vault import ImportResponse, VaultTransit
 
 
@@ -51,7 +51,8 @@ def issue_access_token(
     vault_addr: str,
     vault_token: str,
     app_client_id: str,
-    account: str,
+    account: None | str = None,
+    installation_id: None | int | str = None,
     key_version: int = 0,
     permissions: None | TokenPermissions = None,
     repositories: None | list[RepoName] = None,
@@ -65,7 +66,8 @@ def issue_access_token(
     :param vault_addr: Vault instance VAULT_ADDR.
     :param vault_token: Vault instance VAULT_TOKEN.
     :param app_client_id: GitHub App client ID.
-    :param account: GitHub account to access, where the App is installed.
+    :param account: GitHub account to access. Either it or installation_id is required.
+    :param installation_id: App Installation ID for the GitHub account to access.
     :param key_version: Imported key version to use. Defaults to 0, the latest version.
     :param permissions: Optionally scope (down) token permissions.
     :param repositories: Optionally limit accessible repositories.
@@ -75,6 +77,12 @@ def issue_access_token(
     :return: The requested access token; together with its expiry
         time, permission scope and optionally covered repositories.
     """
+
+    if (account and installation_id) or (not (account or installation_id)):
+        raise ArgumentError("Specify either account or installation_id")
+
+    if isinstance(installation_id, int):
+        installation_id = str(installation_id)
 
     transit = VaultTransit(
         vault_addr=vault_addr,
@@ -89,6 +97,7 @@ def issue_access_token(
 
     ghapp = GitHubApp(
         account=account,
+        installation_id=installation_id,
         jwt_token=jwt,
     )
     access_token: TokenResponse = ghapp.issue_token(

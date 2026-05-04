@@ -80,6 +80,18 @@ def issue_scoped() -> None:
     _check_repos([os.environ["HV4GHA_TEST_REPO"]], access_token["repositories"])
 
 
+def issue_install_id() -> None:
+    """Issue a access token, using App installation id"""
+
+    issue_access_token(
+        key_name=os.environ["HV4GHA_KEYNAME"],
+        vault_addr=os.environ["HV4GHA_VAULT_ADDR"],
+        vault_token=os.environ["HVGHA_VAULT_SIGN_TOKEN"],
+        app_client_id=os.environ["HV4GHA_APP_CLIENT_ID"],
+        installation_id=os.environ["HV4GHA_INSTALL_ID"],
+    )
+
+
 def key_versioning() -> None:
     bad_ok = "Key version shouldn't have been allowed to issue Access Token"
 
@@ -123,6 +135,8 @@ def main() -> None:
             issue()
         elif arg == "issue-scoped":
             issue_scoped()
+        elif arg == "issue-install-id":
+            issue_install_id()
         elif arg == "key-versioning":
             key_versioning()
         else:

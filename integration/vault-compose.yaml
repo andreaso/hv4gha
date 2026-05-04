@@ -18,7 +18,7 @@ services:
       HVGHA_VAULT_IMPORT_TOKEN: CorrectHorseImportKey
       HVGHA_VAULT_SIGN_TOKEN: CorrectHorseSignJWT
     env_file: .env
-    command: [import, issue, issue-scoped]
+    command: [import, issue, issue-scoped, issue-install-id]
     depends_on:
       - vault-setup
 

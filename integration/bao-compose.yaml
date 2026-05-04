@@ -18,7 +18,7 @@ services:
       HVGHA_VAULT_IMPORT_TOKEN: OpenBaoHorseImportKey
       HVGHA_VAULT_SIGN_TOKEN: OpenBaoHorseSignJWT
     env_file: .env
-    command: [import, issue, issue-scoped]
+    command: [import, issue, issue-scoped, issue-install-id]
     depends_on:
       - bao-setup
 
