@@ -45,7 +45,7 @@ class AccountInfo(TypedDict):
 
 class Installation(BaseModel):
     """
-    https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#list-installations-for-the-authenticated-app
+    https://docs.github.com/en/rest/apps/apps?apiVersion=2026-03-10#list-installations-for-the-authenticated-app
     """
 
     id: int
@@ -101,7 +101,7 @@ class Repository(TypedDict):
 
 class AccessTokenResponse(BaseModel):
     """
-    https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app
+    https://docs.github.com/en/rest/apps/apps?apiVersion=2026-03-10#create-an-installation-access-token-for-an-app
     """
 
     token: str
@@ -112,7 +112,7 @@ class AccessTokenResponse(BaseModel):
 
 class AccessTokenRequest(BaseModel, validate_assignment=True, extra="forbid"):
     """
-    https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28#create-an-installation-access-token-for-an-app
+    https://docs.github.com/en/rest/apps/apps?apiVersion=2026-03-10#create-an-installation-access-token-for-an-app
     """
 
     permissions: None | TokenPermissions = None
@@ -147,7 +147,7 @@ class GitHubApp:
         self.auth_headers: Final[dict[str, str]] = {
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {jwt_token}",
-            "X-GitHub-Api-Version": "2022-11-28",
+            "X-GitHub-Api-Version": "2026-03-10",
         }
 
         self.installation_id: str
