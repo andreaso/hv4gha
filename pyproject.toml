@@ -35,19 +35,9 @@ ruff = "^0.16.9"
 target-version = "py310"
 
 [tool.ruff.lint]
-select = [
-  # pycodestyle
-  "E", "W",
-  # pyflakes
-  "F",
-  # pyupgrade
-  "UP",
-  # flake8-bugbear
-  "B",
-  # flake8-simplify
-  "SIM",
-  # flake8-unused-arguments
-  "ARG",
+ignore = [
+  "FLY002", # https://docs.astral.sh/ruff/rules/static-join-to-f-string/
+  "TRY004", # https://docs.astral.sh/ruff/rules/type-check-without-type-error/
 ]
 
 [build-system]
