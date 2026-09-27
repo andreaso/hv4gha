@@ -5,8 +5,10 @@ import os
 import sys
 from base64 import b64decode
 
+from requests.exceptions import HTTPError
+
 from hv4gha import TokenResponse, import_app_key, issue_access_token
-from hv4gha.gh import InstallationLookupError, TokenPermissions
+from hv4gha.gh import TokenPermissions
 from hv4gha.vault import ImportResponse
 
 
@@ -111,12 +113,12 @@ def key_versioning() -> None:
     try:
         _issue_std_token("HV4GHA_KEYNAME2", key_version=2)
         raise TestError(bad_ok)
-    except InstallationLookupError:
+    except HTTPError:
         pass
     try:
         _issue_std_token("HV4GHA_KEYNAME2")
         raise TestError(bad_ok)
-    except InstallationLookupError:
+    except HTTPError:
         pass
 
 

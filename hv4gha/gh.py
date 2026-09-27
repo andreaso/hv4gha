@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Final, Literal
 
 import requests
-from pydantic import BaseModel, Field, TypeAdapter, ValidationError
+from pydantic import BaseModel, Field, TypeAdapter
 from typing_extensions import NotRequired, TypedDict
 
 PermARW = Literal["admin", "read", "write"]
@@ -17,18 +17,6 @@ RepoName = Annotated[str, Field(max_length=100, pattern=r"^[a-zA-Z0-9_\-\.]+$")]
 
 class ArgumentError(ValueError):
     """Used to raise specific argument errors"""
-
-
-class GitHubAPIError(Exception):
-    """Any error response from the GitHub API"""
-
-
-class InstallationLookupError(GitHubAPIError):
-    """Failure to lookup the GitHub App installation ID"""
-
-
-class TokenIssueError(GitHubAPIError):
-    """Failure to issue GitHub Access Token"""
 
 
 class NotInstalledError(Exception):
@@ -169,23 +157,16 @@ class GitHubApp:
         more = True
         while more:
             more = False
-            try:
-                response = requests.get(
-                    lookup_url,
-                    headers=self.auth_headers,
-                    params=pagination_params,
-                    timeout=10,
-                )
-                response.raise_for_status()
-            except requests.exceptions.HTTPError as http_error:
-                raise InstallationLookupError(http_error.response.text) from http_error
+            response = requests.get(
+                lookup_url,
+                headers=self.auth_headers,
+                params=pagination_params,
+                timeout=10,
+            )
+            response.raise_for_status()
 
-            try:
-                ita = TypeAdapter(list[Installation])
-                installations = ita.validate_python(response.json())
-            except ValidationError as validation_error:
-                error_message = "<Failed to parse Installations API response>"
-                raise InstallationLookupError(error_message) from validation_error
+            ita = TypeAdapter(list[Installation])
+            installations = ita.validate_python(response.json())
 
             for installation in installations:
                 if installation.account["login"].lower() == account.lower():
@@ -216,15 +197,9 @@ class GitHubApp:
 
         params_bm = AccessTokenRequest()
         if permissions:
-            try:
-                params_bm.permissions = permissions
-            except ValidationError as validation_error:
-                raise ValueError("Invalid GitHub permission(s)") from validation_error
+            params_bm.permissions = permissions
         if repositories:
-            try:
-                params_bm.repositories = repositories
-            except ValidationError as validation_error:
-                raise ValueError("Invalid repository name(s)") from validation_error
+            params_bm.repositories = repositories
 
         issue_url = "/".join(
             [
@@ -234,23 +209,15 @@ class GitHubApp:
             ]
         )
 
-        try:
-            response = requests.post(
-                issue_url,
-                headers=self.auth_headers,
-                data=params_bm.model_dump_json(exclude_unset=True),
-                timeout=10,
-            )
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as http_error:
-            raise TokenIssueError(http_error.response.text) from http_error
+        response = requests.post(
+            issue_url,
+            headers=self.auth_headers,
+            data=params_bm.model_dump_json(exclude_unset=True),
+            timeout=10,
+        )
+        response.raise_for_status()
 
-        try:
-            access_token_bm = AccessTokenResponse(**response.json())
-        except ValidationError as validation_error:
-            error_message = "<Failed to parse Token Issue API response>"
-            raise TokenIssueError(error_message) from validation_error
-
+        access_token_bm = AccessTokenResponse(**response.json())
         access_token: TokenResponse = {
             "access_token": access_token_bm.token,
             "expires_at": access_token_bm.expires_at,

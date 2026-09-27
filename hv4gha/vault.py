@@ -15,30 +15,6 @@ from typing_extensions import TypedDict
 from .helpers import b64str, prepare_gh_app_jwt, private_pem_to_der, vault_wrap_key
 
 
-class VaultAPIError(Exception):
-    """Any error response from the Vault API"""
-
-
-class AppKeyImportError(VaultAPIError):
-    """Failure to upload/import the wrapped GitHub App key into Vault"""
-
-
-class JWTSigningError(VaultAPIError):
-    """Failure to have Vault sign a GitHub App JWT token"""
-
-
-class TokenRevokeError(VaultAPIError):
-    """Failure to self-revoke the Vault token"""
-
-
-class VersionLookupError(VaultAPIError):
-    """Failure to lookup the version of the imported key version"""
-
-
-class WrappingKeyDownloadError(VaultAPIError):
-    """Failure to download the Vault Transit wrapping key"""
-
-
 class VaultErrors(BaseModel):
     """
     https://developer.hashicorp.com/vault/api-docs#error-response
@@ -146,17 +122,8 @@ class VaultTransit:
     def __download_wrapping_key(self) -> rsa.RSAPublicKey:
         api_path = f"/v1/{self.transit_backend}/wrapping_key"
 
-        try:
-            response: requests.models.Response = self.__api_read(api_path)
-        except requests.exceptions.HTTPError as http_error:
-            raise WrappingKeyDownloadError(http_error.response.text) from http_error
-
-        try:
-            wrapping_key_bm = WrappingKey(**response.json())
-        except ValidationError as validation_error:
-            error_message = "<Failed to parse Wrapping Key API response>"
-            raise WrappingKeyDownloadError(error_message) from validation_error
-
+        response: requests.models.Response = self.__api_read(api_path)
+        wrapping_key_bm = WrappingKey(**response.json())
         wrapping_pem_key = wrapping_key_bm.data["public_key"].encode()
         wrapping_key = serialization.load_pem_public_key(wrapping_pem_key)
 
@@ -168,16 +135,8 @@ class VaultTransit:
     def __lookup_version(self, *, key_name: str) -> int:
         api_path = f"/v1/{self.transit_backend}/keys/{key_name}"
 
-        try:
-            response: requests.models.Response = self.__api_read(api_path)
-        except requests.exceptions.HTTPError as http_error:
-            raise VersionLookupError(http_error.response.text) from http_error
-
-        try:
-            key_lookup_bm = KeyLookup(**response.json())
-        except ValidationError as validation_error:
-            error_message = "<Failed to parse key lookup API response>"
-            raise VersionLookupError(error_message) from validation_error
+        response: requests.models.Response = self.__api_read(api_path)
+        key_lookup_bm = KeyLookup(**response.json())
 
         return key_lookup_bm.data["latest_version"]
 
@@ -196,11 +155,7 @@ class VaultTransit:
             "hash_function": "SHA256",
         }
 
-        try:
-            self.__api_write(api_path, payload)
-        except requests.exceptions.HTTPError as http_error:
-            raise AppKeyImportError(http_error.response.text) from http_error
-
+        self.__api_write(api_path, payload)
         key_version: int = self.__lookup_version(key_name=key_name)
         return key_version
 
@@ -230,7 +185,7 @@ class VaultTransit:
             return key_import
         except requests.exceptions.HTTPError as http_error:
             if not self.__check_import_version_error(http_error):
-                raise AppKeyImportError(http_error.response.text) from http_error
+                raise
 
             key_version: int = self.__import_version(
                 key_name=key_name, wrapped_b64=wrapped_b64
@@ -262,29 +217,16 @@ class VaultTransit:
             "key_version": key_version,
         }
 
-        try:
-            response: requests.models.Response = self.__api_write(api_path, payload)
-        except requests.exceptions.HTTPError as http_error:
-            raise JWTSigningError(http_error.response.text) from http_error
-
-        try:
-            signature_bm = SignedJWT(**response.json())
-        except ValidationError as validation_error:
-            error_message = "<Failed to parse Sign JWT API response>"
-            raise JWTSigningError(error_message) from validation_error
-
+        response: requests.models.Response = self.__api_write(api_path, payload)
+        signature_bm = SignedJWT(**response.json())
         signature = re.sub(r"^vault:v[0-9]+:", "", signature_bm.data["signature"])
         signature = b64str(base64.b64decode(signature), urlsafe=True)
-
         jwt_token = header_and_claims + "." + signature
+
         return jwt_token
 
     def revoke_token(self) -> None:
         """Vault Token self-revoke"""
 
         api_path = "/v1/auth/token/revoke-self"
-
-        try:
-            self.__api_write(api_path)
-        except requests.exceptions.HTTPError as http_error:
-            raise TokenRevokeError(http_error.response.text) from http_error
+        self.__api_write(api_path)
