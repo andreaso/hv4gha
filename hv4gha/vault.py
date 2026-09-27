@@ -80,8 +80,9 @@ class VaultTransit:
         :param vault_token: Vault instance VAULT_TOKEN.
         :param transit_backend: Transit backend mount path.
         """
+        self.requests_session = requests.Session()
+        self.requests_session.headers.update({"X-Vault-Token": vault_token})
         self.vault_addr: Final[str] = vault_addr.rstrip("/")
-        self.auth_headers: Final[dict[str, str]] = {"X-Vault-Token": vault_token}
         self.transit_backend: Final[str] = transit_backend.strip("/")
 
     def __api_read(
@@ -90,9 +91,8 @@ class VaultTransit:
     ) -> requests.models.Response:
         read_url = self.vault_addr + api_path
 
-        response = requests.get(
+        response = self.requests_session.get(
             read_url,
-            headers=self.auth_headers,
             timeout=10,
         )
         response.raise_for_status()
@@ -109,9 +109,8 @@ class VaultTransit:
         if payload is None:
             payload = {}
 
-        response = requests.post(
+        response = self.requests_session.post(
             update_url,
-            headers=self.auth_headers,
             data=json.dumps(payload),
             timeout=10,
         )
