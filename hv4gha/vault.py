@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from pydantic import BaseModel, ValidationError
 from typing_extensions import TypedDict
+from urllib3.util import Retry
 
 from .helpers import b64str, prepare_gh_app_jwt, private_pem_to_der, vault_wrap_key
 
@@ -104,10 +105,21 @@ class VaultTransit:
         :param vault_token: Vault instance VAULT_TOKEN.
         :param transit_backend: Transit backend mount path.
         """
-        self.requests_session = requests.Session()
-        self.requests_session.headers.update({"X-Vault-Token": vault_token})
+        self.session = requests.Session()
+        self.session.headers.update({"X-Vault-Token": vault_token})
         self.vault_addr: Final[str] = vault_addr.rstrip("/")
         self.transit_backend: Final[str] = transit_backend.strip("/")
+
+        retries = Retry(
+            total=5,
+            backoff_factor=1,
+            status_forcelist=[502, 503, 504],
+            allowed_methods={"GET", "POST"},
+        )
+        self.session.mount(
+            vault_addr,
+            requests.adapters.HTTPAdapter(max_retries=retries),
+        )
 
     def __api_read(
         self,
@@ -115,7 +127,7 @@ class VaultTransit:
     ) -> requests.models.Response:
         read_url = self.vault_addr + api_path
 
-        response = self.requests_session.get(
+        response = self.session.get(
             read_url,
             timeout=10,
         )
@@ -133,7 +145,7 @@ class VaultTransit:
         if payload is None:
             payload = {}
 
-        response = self.requests_session.post(
+        response = self.session.post(
             update_url,
             data=json.dumps(payload),
             timeout=10,
