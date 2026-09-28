@@ -11,6 +11,8 @@ def import_app_key(
     vault_addr: str,
     vault_token: str,
     transit_backend: str = "transit",
+    vault_retry_total: int = 3,
+    vault_retry_backoff: float = 0.2,
     revoke_vault_token: bool = False,
 ) -> ImportResponse:
     """
@@ -21,6 +23,8 @@ def import_app_key(
     :param vault_addr: Vault instance VAULT_ADDR.
     :param vault_token: Vault instance VAULT_TOKEN.
     :param transit_backend: Transit backend mount path. Defaults to "transit".
+    :param vault_retry_total: Maps to urllib3.util.Retry total. Defaults to 3.
+    :param vault_retry_backoff: Maps to urllib3.util.Retry backoff_factor. Defaults to 0.2.
     :param revoke_vault_token: Revoke `vault_token` once done? Defaults to False.
 
     :return: Key import info, containing the key version.
@@ -33,6 +37,8 @@ def import_app_key(
         vault_addr=vault_addr,
         vault_token=vault_token,
         transit_backend=transit_backend,
+        retry_total=vault_retry_total,
+        retry_backoff=vault_retry_backoff,
     )
     key_import: ImportResponse = transit.import_key(
         key_name=key_name,
@@ -57,6 +63,8 @@ def issue_access_token(
     permissions: None | TokenPermissions = None,
     repositories: None | list[RepoName] = None,
     transit_backend: str = "transit",
+    vault_retry_total: int = 3,
+    vault_retry_backoff: float = 0.2,
     revoke_vault_token: bool = False,
 ) -> TokenResponse:
     """
@@ -72,6 +80,8 @@ def issue_access_token(
     :param permissions: Optionally scope (down) token permissions.
     :param repositories: Optionally limit accessible repositories.
     :param transit_backend: Vault Transit backend mount path. Defaults to "transit".
+    :param vault_retry_total: Maps to urllib3.util.Retry total. Defaults to 3.
+    :param vault_retry_backoff: Maps to urllib3.util.Retry backoff_factor. Defaults to 0.2.
     :param revoke_vault_token: Revoke `vault_token` once done? Defaults to False.
 
     :return: The requested access token; together with its expiry
@@ -88,6 +98,8 @@ def issue_access_token(
         vault_addr=vault_addr,
         vault_token=vault_token,
         transit_backend=transit_backend,
+        retry_total=vault_retry_total,
+        retry_backoff=vault_retry_backoff,
     )
     jwt: str = transit.sign_jwt(
         key_name=key_name,

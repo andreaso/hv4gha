@@ -6,10 +6,13 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Final
 
-import requests
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from pydantic import BaseModel, ValidationError
+from requests import Session
+from requests.adapters import HTTPAdapter
+from requests.exceptions import HTTPError
+from requests.models import Response as RequestsResponse
 from typing_extensions import TypedDict
 from urllib3.util import Retry
 
@@ -75,32 +78,39 @@ class ImportResponse(TypedDict):
 class VaultTransit:
     """Interact with Vault's Transit Secrets Engine"""
 
-    def __init__(self, *, vault_addr: str, vault_token: str, transit_backend: str):
+    def __init__(
+        self,
+        *,
+        vault_addr: str,
+        vault_token: str,
+        transit_backend: str,
+        retry_total: int,
+        retry_backoff: float,
+    ):
         """
         :param vault_addr: Vault instance VAULT_ADDR.
         :param vault_token: Vault instance VAULT_TOKEN.
         :param transit_backend: Transit backend mount path.
+        :param retry_total: Maps to urllib3.util.Retry total.
+        :param retry_backoff: Maps to urllib3.util.Retry backoff_factor.
         """
-        self.session = requests.Session()
+        self.session = Session()
         self.session.headers.update({"X-Vault-Token": vault_token})
         self.vault_addr: Final[str] = vault_addr.rstrip("/")
         self.transit_backend: Final[str] = transit_backend.strip("/")
 
         retries = Retry(
-            total=5,
-            backoff_factor=1,
-            status_forcelist=[502, 503, 504],
+            total=retry_total,
+            backoff_factor=retry_backoff,
+            status_forcelist=[500, 502, 503],
             allowed_methods={"GET", "POST"},
         )
-        self.session.mount(
-            vault_addr,
-            requests.adapters.HTTPAdapter(max_retries=retries),
-        )
+        self.session.mount(vault_addr, HTTPAdapter(max_retries=retries))
 
     def __api_read(
         self,
         api_path: str,
-    ) -> requests.models.Response:
+    ) -> RequestsResponse:
         read_url = self.vault_addr + api_path
 
         response = self.session.get(
@@ -115,7 +125,7 @@ class VaultTransit:
         self,
         api_path: str,
         payload: None | dict[str, Any] = None,
-    ) -> requests.models.Response:
+    ) -> RequestsResponse:
         update_url = self.vault_addr + api_path
 
         if payload is None:
@@ -133,7 +143,7 @@ class VaultTransit:
     def __download_wrapping_key(self) -> rsa.RSAPublicKey:
         api_path = f"/v1/{self.transit_backend}/wrapping_key"
 
-        response: requests.models.Response = self.__api_read(api_path)
+        response: RequestsResponse = self.__api_read(api_path)
         wrapping_key_bm = WrappingKey(**response.json())
         wrapping_pem_key = wrapping_key_bm.data["public_key"].encode()
         wrapping_key = serialization.load_pem_public_key(wrapping_pem_key)
@@ -146,13 +156,13 @@ class VaultTransit:
     def __lookup_version(self, *, key_name: str) -> int:
         api_path = f"/v1/{self.transit_backend}/keys/{key_name}"
 
-        response: requests.models.Response = self.__api_read(api_path)
+        response: RequestsResponse = self.__api_read(api_path)
         key_lookup_bm = KeyLookup(**response.json())
 
         return key_lookup_bm.data["latest_version"]
 
     @staticmethod
-    def __check_import_version_error(http_error: requests.exceptions.HTTPError) -> bool:
+    def __check_import_version_error(http_error: HTTPError) -> bool:
         try:
             errors_bm = VaultErrors(**http_error.response.json())
         except ValidationError:
@@ -194,7 +204,8 @@ class VaultTransit:
         try:
             self.__api_write(api_path, payload)
             return key_import
-        except requests.exceptions.HTTPError as http_error:
+        except HTTPError as http_error:
+            print("DING DING DING")
             if not self.__check_import_version_error(http_error):
                 raise
 
@@ -228,7 +239,7 @@ class VaultTransit:
             "key_version": key_version,
         }
 
-        response: requests.models.Response = self.__api_write(api_path, payload)
+        response: RequestsResponse = self.__api_write(api_path, payload)
         signature_bm = SignedJWT(**response.json())
         signature = re.sub(r"^vault:v[0-9]+:", "", signature_bm.data["signature"])
         signature = b64str(base64.b64decode(signature), urlsafe=True)
