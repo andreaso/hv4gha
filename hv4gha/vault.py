@@ -78,34 +78,16 @@ class ImportResponse(TypedDict):
 class VaultTransit:
     """Interact with Vault's Transit Secrets Engine"""
 
-    def __init__(
-        self,
-        *,
-        vault_addr: str,
-        vault_token: str,
-        transit_backend: str,
-        retry_total: int,
-        retry_backoff: float,
-    ):
+    def __init__(self, *, vault_addr: str, vault_token: str, transit_backend: str):
         """
         :param vault_addr: Vault instance VAULT_ADDR.
         :param vault_token: Vault instance VAULT_TOKEN.
         :param transit_backend: Transit backend mount path.
-        :param retry_total: Maps to urllib3.util.Retry total.
-        :param retry_backoff: Maps to urllib3.util.Retry backoff_factor.
         """
         self.session = Session()
         self.session.headers.update({"X-Vault-Token": vault_token})
         self.vault_addr: Final[str] = vault_addr.rstrip("/")
         self.transit_backend: Final[str] = transit_backend.strip("/")
-
-        retries = Retry(
-            total=retry_total,
-            backoff_factor=retry_backoff,
-            status_forcelist=[500, 502, 503],
-            allowed_methods={"GET", "POST"},
-        )
-        self.session.mount(vault_addr, HTTPAdapter(max_retries=retries))
 
     def __api_read(
         self,
@@ -205,7 +187,6 @@ class VaultTransit:
             self.__api_write(api_path, payload)
             return key_import
         except HTTPError as http_error:
-            print("DING DING DING")
             if not self.__check_import_version_error(http_error):
                 raise
 
@@ -216,17 +197,38 @@ class VaultTransit:
 
         return key_import
 
-    def sign_jwt(self, *, key_name: str, key_version: int, app_client_id: str) -> str:
+    def sign_jwt(
+        self,
+        *,
+        key_name: str,
+        key_version: int,
+        app_client_id: str,
+        retry_total: int,
+        retry_backoff: float,
+    ) -> str:
         """
         Sign JWT token to authenticate towards GitHub
 
         :param key_name: Transit Engine key name.
         :param key_version: Transit Engine key version.
         :param app_client_id: GitHub App client ID.
+        :param retry_total: Maps to urllib3.util.Retry total.
+        :param retry_backoff: Maps to urllib3.util.Retry backoff_factor.
 
 
         :return: GitHub App JWT token
         """
+
+        api_path = f"/v1/{self.transit_backend}/sign/{key_name}"
+        api_url = self.vault_addr + api_path
+
+        retries = Retry(
+            total=retry_total,
+            backoff_factor=retry_backoff,
+            status_forcelist=[500, 502, 503],
+            allowed_methods={"GET", "POST"},
+        )
+        self.session.mount(api_url, HTTPAdapter(max_retries=retries))
 
         now = datetime.now(timezone.utc)
         header_and_claims = prepare_gh_app_jwt(app_client_id, now)
