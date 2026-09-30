@@ -57,6 +57,8 @@ def issue_access_token(
     permissions: None | TokenPermissions = None,
     repositories: None | list[RepoName] = None,
     transit_backend: str = "transit",
+    vault_retry_total: int = 3,
+    vault_retry_backoff: float = 0.2,
     revoke_vault_token: bool = False,
 ) -> TokenResponse:
     """
@@ -72,6 +74,8 @@ def issue_access_token(
     :param permissions: Optionally scope (down) token permissions.
     :param repositories: Optionally limit accessible repositories.
     :param transit_backend: Vault Transit backend mount path. Defaults to "transit".
+    :param vault_retry_total: Maps to urllib3.util.Retry total. Defaults to 3.
+    :param vault_retry_backoff: Maps to urllib3.util.Retry backoff_factor. Defaults to 0.2.
     :param revoke_vault_token: Revoke `vault_token` once done? Defaults to False.
 
     :return: The requested access token; together with its expiry
@@ -93,6 +97,8 @@ def issue_access_token(
         key_name=key_name,
         key_version=key_version,
         app_client_id=app_client_id,
+        retry_total=vault_retry_total,
+        retry_backoff=vault_retry_backoff,
     )
 
     ghapp = GitHubApp(
