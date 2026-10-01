@@ -85,7 +85,9 @@ class VaultTransit:
         :param transit_backend: Transit backend mount path.
         """
         self.session = Session()
-        self.session.headers.update({"X-Vault-Token": vault_token})
+        self.session.headers.update(
+            {"X-Vault-Token": vault_token, "X-Vault-Request": "true"}
+        )
         self.vault_addr: Final[str] = vault_addr.rstrip("/")
         self.transit_backend: Final[str] = transit_backend.strip("/")
 
