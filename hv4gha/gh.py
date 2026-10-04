@@ -46,15 +46,23 @@ class TokenPermissions(TypedDict, total=False):
     # Repository permissions
     actions: PermRW
     administration: PermRW
+    artifact_metadata: PermRW
+    attestations: PermRW
     checks: PermRW
+    code_quality: PermRW
+    codespaces: PermRW
     contents: PermRW
+    dependabot_secrets: PermRW
     deployments: PermRW
+    discussions: PermRW
     environments: PermRW
     issues: PermRW
+    merge_queues: PermRW
     metadata: PermRW
     packages: PermRW
     pages: PermRW
     pull_requests: PermRW
+    repository_custom_properties: PermRW
     repository_hooks: PermRW
     repository_projects: PermARW
     secret_scanning_alerts: PermRW
@@ -65,10 +73,17 @@ class TokenPermissions(TypedDict, total=False):
     vulnerability_alerts: PermRW
     workflows: PermW
     # Organizational permissions
+    custom_properties_for_organizations: PermRW
     members: PermRW
     organization_administration: PermRW
     organization_custom_roles: PermRW
+    organization_custom_org_roles: PermRW
+    organization_custom_properties: PermARW
+    organization_copilot_seat_management: PermRW
+    organization_copilot_agent_settings: PermRW
+    organization_external_properties_for_repos: PermARW
     organization_announcement_banners: PermRW
+    organization_events: PermR
     organization_hooks: PermRW
     organization_personal_access_tokens: PermRW
     organization_personal_access_token_requests: PermRW
@@ -78,7 +93,16 @@ class TokenPermissions(TypedDict, total=False):
     organization_secrets: PermRW
     organization_self_hosted_runners: PermRW
     organization_user_blocking: PermRW
-    team_discussions: PermRW
+    # Account permissions
+    email_addresses: PermRW
+    followers: PermRW
+    git_ssh_keys: PermRW
+    gpg_keys: PermRW
+    interaction_limits: PermRW
+    profile: PermW
+    starring: PermRW
+    # Enterprise permissions
+    enterprise_custom_properties_for_organizations: PermARW
 
 
 class Repository(TypedDict):
