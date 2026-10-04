@@ -1,5 +1,5 @@
 ARG pyver=3.11
-FROM python:${pyver}-slim-bookworm AS python-prepare
+FROM python:${pyver}-slim-trixie AS python-prepare
 
 RUN pip install --no-cache-dir poetry poetry-plugin-export
 
@@ -8,7 +8,7 @@ COPY pyproject.toml poetry.lock /pip/
 RUN poetry export --without-hashes --format=requirements.txt --output=constraints.txt
 
 
-FROM python:${pyver}-slim-bookworm AS python-hv4gha
+FROM python:${pyver}-slim-trixie AS python-hv4gha
 
 COPY --from=python-prepare /pip/constraints.txt /src/
 COPY pyproject.toml README.md /src/
