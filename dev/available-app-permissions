@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import requests
+
+Permissions = dict[str, dict[str, str | list[str]]]
+
+
+def avail_perms() -> Permissions:
+    openapi_url = "/".join(
+        [
+            "https://raw.githubusercontent.com",
+            "github/rest-api-description",
+            "refs/heads/main",
+            "descriptions/api.github.com",
+            "api.github.com.2026-03-10.json",
+        ]
+    )
+
+    response = requests.get(openapi_url, timeout=10)
+    schemas = response.json()["components"]["schemas"]
+    permissions: Permissions = schemas["app-permissions"]["properties"]
+
+    return permissions
+
+
+def identity_access(access_set: set[str]) -> str:
+    if access_set == {"admin", "read", "write"}:
+        return "PermARW"
+    elif access_set == {"read", "write"}:
+        return "PermRW"
+    elif access_set == {"read"}:
+        return "PermR"
+    elif access_set == {"write"}:
+        return "PermW"
+
+    raise ValueError("Unexpected access set")
+
+
+def parse_perms(permissions: Permissions) -> list[tuple[str, str]]:
+    output = []
+    for permission, desc in permissions.items():
+        access_name = identity_access(set(desc["enum"]))
+        output.append((permission, access_name))
+
+    return output
+
+
+def main() -> None:
+    permissions = avail_perms()
+    output = parse_perms(permissions)
+    for item in output:
+        print(f"    {item[0]}: {item[1]}")
+
+
+if __name__ == "__main__":
+    main()
