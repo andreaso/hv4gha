@@ -11,7 +11,7 @@ RUN poetry export --without-hashes --format=requirements.txt --output=constraint
 FROM python:${pyver}-slim-trixie AS python-hv4gha
 
 COPY --from=python-prepare /pip/constraints.txt /src/
-COPY pyproject.toml README.md /src/
+COPY pyproject.toml LICENSE README.md /src/
 COPY hv4gha /src/hv4gha
 
 ARG pip_extra=""
