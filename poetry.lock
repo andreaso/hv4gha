@@ -592,7 +592,10 @@ librt = {version = ">=0.13.0", markers = "platform_python_implementation != \"Py
 mypy_extensions = ">=1.0.0"
 pathspec = ">=1.0.0"
 tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
-typing_extensions = {version = ">=4.6.0", markers = "python_version < \"3.15\""}
+typing_extensions = [
+    {version = ">=4.6.0", markers = "python_version < \"3.15\""},
+    {version = ">=4.14.0", markers = "python_version >= \"3.15\""},
+]
 
 [package.extras]
 dmypy = ["psutil (>=4.0)"]
@@ -983,5 +986,5 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10, <3.15"
-content-hash = "ae07c482a0f01f508cdd93512a505b9b0f059570e27c410c4a0f2cec93dc8720"
+python-versions = ">=3.10, <3.16"
+content-hash = "87f96708ec5ef99ac82a49f6ed012959dc71de3e035a8f8fb07aeb0057035ea3"
