@@ -6,7 +6,7 @@ authors = [{name = "Andreas Olsson", email = "andreas@arrakis.se"}]
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
-  "certifi (>=2025.10.5)",
+  "certifi (>=2026.7.22)",
   "cffi (>=2.1.1)",
   "cryptography (>=43.0.1)",
   "requests (>=2.31.0,<3)",
