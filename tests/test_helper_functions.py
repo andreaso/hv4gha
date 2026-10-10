@@ -2,7 +2,7 @@
 
 import json
 from base64 import b64decode
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from cryptography.hazmat.primitives import hashes, keywrap, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -86,7 +86,7 @@ def test_prepare_jwt_1() -> None:
         day=21,
         hour=7,
         minute=0,
-        tzinfo=timezone.utc,
+        tzinfo=UTC,
     )
 
     resulted_payload = prepare_gh_app_jwt(app_id, utctime)
@@ -110,7 +110,7 @@ def test_prepare_jwt_2() -> None:
         minute=14,
         second=31,
         microsecond=776991,
-        tzinfo=timezone.utc,
+        tzinfo=UTC,
     )
 
     resulted_payload = prepare_gh_app_jwt(app_id, utctime)

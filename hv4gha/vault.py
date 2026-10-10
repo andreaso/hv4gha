@@ -3,7 +3,7 @@
 import base64
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Final
 
 from cryptography.hazmat.primitives import serialization
@@ -232,7 +232,7 @@ class VaultTransit:
         )
         self.session.mount(api_url, HTTPAdapter(max_retries=retries))
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         header_and_claims = prepare_gh_app_jwt(app_client_id, now)
 
         api_path = f"/v1/{self.transit_backend}/sign/{key_name}"

@@ -1,11 +1,11 @@
 """GitHub specific code"""
 
 from datetime import datetime
-from typing import Annotated, Final, Literal
+from typing import Annotated, Final, Literal, NotRequired
 
 import requests
 from pydantic import BaseModel, Field, TypeAdapter
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 
 PermARW = Literal["admin", "read", "write"]
 PermRW = Literal["read", "write"]
