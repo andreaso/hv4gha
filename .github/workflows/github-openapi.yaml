@@ -1,0 +1,31 @@
+---
+
+name: Check GitHub OpenAPI Descriptions
+
+on:
+  schedule:
+    - cron: "15 13 1 * *"
+      timezone: Europe/Stockholm
+
+permissions:
+  contents: read
+
+jobs:
+  permissions:
+    name: Permissions check
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install Python dependencies
+        run: poetry install
+
+      - name: Run permissions test
+        run: poetry run pytest tests/test_app_permissions.py
