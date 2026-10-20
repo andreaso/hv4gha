@@ -81,6 +81,7 @@ class TokenPermissions(TypedDict, total=False):
     organization_custom_properties: PermARW
     organization_copilot_seat_management: PermRW
     organization_copilot_agent_settings: PermRW
+    organization_copilot_requests: PermR
     organization_external_properties_for_repos: PermARW
     organization_announcement_banners: PermRW
     organization_events: PermR
