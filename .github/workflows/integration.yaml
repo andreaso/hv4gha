@@ -43,9 +43,9 @@ jobs:
           TEST_APP_KEY_B64: ${{ secrets.TEST_APP_KEY_B64 }}
 
       - name: Build test image
-        run: docker compose -f "integration/${BACKEND}-compose.yaml" build --build-arg pyver="${py_version}" --build-arg pip_extra="${pip_extra}" testrunner
+        run: docker compose -f "integration/${BACKEND}-compose.yaml" build --build-arg pyver="${py_version}" --build-arg resolution="${uv_resolution}" testrunner
         env:
-          pip_extra: ${{ matrix.dependencies == 'constrained' && '--constraint=/src/constraints.txt' || '' }}
+          uv_resolution: ${{ matrix.dependencies == 'constrained' && 'lowest-direct' || 'highest' }}
           py_version: ${{ matrix.py_version }}
 
       - name: Bring up server

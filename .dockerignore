@@ -1,6 +1,5 @@
 *
 !pyproject.toml
-!poetry.lock
 !LICENSE
 !README.md
 !integration/testrun.py
