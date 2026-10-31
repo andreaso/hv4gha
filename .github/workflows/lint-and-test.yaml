@@ -18,6 +18,7 @@ jobs:
         dependencies: ["constrained", "unconstrained"]
 
     env:
+      UV_MANAGED_PYTHON: true
       UV_RESOLUTION: ${{ matrix.dependencies == 'constrained' && 'lowest-direct' || 'highest' }}
 
     steps:
