@@ -1,7 +1,7 @@
 ARG pyver=3.11
 FROM python:${pyver}-slim-trixie AS python-prepare
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/
 
 WORKDIR /pip
 COPY pyproject.toml /pip/
