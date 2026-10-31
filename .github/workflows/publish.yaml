@@ -26,8 +26,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Setup uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Output expected packge version refs/tags/
         id: expected
@@ -38,7 +38,7 @@ jobs:
         run: echo "Mismatch between pushed tag and package version"; exit 1
 
       - name: Build package
-        run: poetry build
+        run: uv build
 
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
