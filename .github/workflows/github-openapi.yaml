@@ -2,10 +2,7 @@
 
 name: Check GitHub OpenAPI Descriptions
 
-on:
-  schedule:
-    - cron: "15 13 1 * *"
-      timezone: Europe/Stockholm
+on: push
 
 permissions:
   contents: read
