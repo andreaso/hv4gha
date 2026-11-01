@@ -147,6 +147,8 @@ class VaultTransit:
 
     @staticmethod
     def __check_import_version_error(http_error: HTTPError) -> bool:
+        if http_error.response is None:
+            return False
         try:
             errors_bm = VaultErrors(**http_error.response.json())
         except ValidationError:
