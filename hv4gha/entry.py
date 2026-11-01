@@ -1,6 +1,5 @@
 """Top-level functions"""
 
-import jwt
 from .gh import ArgumentError, GitHubApp, RepoName, TokenPermissions, TokenResponse
 from .vault import ImportResponse, VaultTransit
 
