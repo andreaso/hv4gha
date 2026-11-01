@@ -9,7 +9,7 @@ def import_app_key(
     *,
     key_name: str,
     vault_addr: str,
-    vault_token: str,
+    vault_token: int,
     transit_backend: str = "transit",
     revoke_vault_token: bool = False,
 ) -> ImportResponse:
