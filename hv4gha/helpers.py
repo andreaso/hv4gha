@@ -46,7 +46,7 @@ def prepare_gh_app_jwt(app_client_id: str, now: datetime) -> str:
     claims = {
         "iat": timestamp,
         "exp": expire,
-        "iss": app_client_id,
+        "iss": "bob",
     }
 
     b64_header = b64str(json.dumps(header), urlsafe=True)
