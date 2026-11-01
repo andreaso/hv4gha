@@ -40,7 +40,7 @@ def prepare_gh_app_jwt(app_client_id: str, now: datetime) -> str:
 
     header = {
         "alg": "RS256",
-        "typ": "BOB",
+        "typ": "JWT",
     }
 
     claims = {
