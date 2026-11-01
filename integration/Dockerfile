@@ -1,21 +1,23 @@
 ARG pyver=3.11
 FROM python:${pyver}-slim-trixie AS python-prepare
 
-RUN pip install --no-cache-dir poetry poetry-plugin-export
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/
 
 WORKDIR /pip
-COPY pyproject.toml poetry.lock /pip/
-RUN poetry export --without-hashes --format=requirements.txt --output=constraints.txt
+COPY pyproject.toml /pip/
+
+ARG resolution=highest
+RUN uv export --no-cache --no-emit-project --no-dev --resolution="$resolution" --format=requirements.txt --output-file=requirements.txt
 
 
 FROM python:${pyver}-slim-trixie AS python-hv4gha
 
-COPY --from=python-prepare /pip/constraints.txt /src/
+COPY --from=python-prepare /pip/requirements.txt /pip/
 COPY pyproject.toml LICENSE README.md /src/
 COPY hv4gha /src/hv4gha
 
-ARG pip_extra=""
-RUN pip install --no-cache-dir ${pip_extra} /src/
+RUN pip install --no-cache-dir --root-user-action=ignore --requirement=/pip/requirements.txt \
+ && pip install --no-cache-dir --root-user-action=ignore --no-deps /src/
 
 COPY --chmod=755 integration/testrun.py /app/
 ENTRYPOINT ["/app/testrun.py"]

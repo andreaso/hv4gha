@@ -34,6 +34,9 @@ dev = [
   "ruff (>=0.16.9,<0.17)",
 ]
 
+[tool.uv]
+exclude-newer = "P4D"
+
 [tool.ruff]
 target-version = "py311"
 
@@ -44,5 +47,8 @@ ignore = [
 ]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
